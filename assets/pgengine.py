@@ -69,9 +69,12 @@ class Obj:
         self.frames_data = {}
         self.frame = 0
         self._action = None
+        self.flipped_x = False
+        self.flipped_y = False
 
     def draw(self, surface, scroll_x= 0, scroll_y= 0):
-        surface.blit(self.img, ( self.x - self.width/2 + scroll_x, self.y - self.height/2 + scroll_y))
+        img = pygame.transform.flip(self.img, self.flipped_x, self.flipped_y)
+        surface.blit(img, ( self.x - self.width/2 + scroll_x, self.y - self.height/2 + scroll_y))
 
     def draw_rect(self, surface, color= (255, 255, 255)):
         pygame.draw.rect(surface, color, self.rect)
@@ -98,7 +101,7 @@ class Obj:
         self.frame += 1
         if self.frame >= frames:
             self.frame = 0
-    
+
     def anim(self):
         self.frame_update(len(self.frames_data[self.action]))
         self.img = self.imgs_data[self.action][self.frames_data[self.action][self.frame]]
@@ -118,8 +121,9 @@ class Obj:
 
     @action.setter
     def action(self, new_action):
-        self._action = new_action
-        self.frame = 0
+        if self.action != new_action:
+            self._action = new_action
+            self.frame = 0
 
     @property
     def img(self):
@@ -176,8 +180,10 @@ class Platformer(Rigidbody):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
                 self.right = True
+                self.flipped_x = False
             if event.key == pygame.K_LEFT:
                 self.left = True
+                self.flipped_x = True
             if event.key == pygame.K_UP:
                 if self.jumps > 0:
                     self.jump()
@@ -190,9 +196,9 @@ class Platformer(Rigidbody):
     
     def update(self):
         if self.right:
-            self.x_momentum = self.xvel
+            self.x_momentum = int(self.xvel)
         elif self.left:
-            self.x_momentum = - self.xvel
+            self.x_momentum = - int(self.xvel)
         else:
             self.x_momentum = 0
         
@@ -220,7 +226,8 @@ class Platformer(Rigidbody):
                 self.y_momentum = 0
             elif self.y_momentum < 0:
                 self.collide['top'] = True
-                self.y = tile.rect.bottom + self.height/2                
+                self.y = tile.rect.bottom + self.height/2  
+                self.y_momentum = 0              
    
     def jump(self):
         self.y_momentum = - self.jump_force  
