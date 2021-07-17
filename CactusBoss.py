@@ -1,16 +1,22 @@
 import pygame,sys
 from pygame.locals import *
 from assets.pgengine import *
+from random import randint
+from math import hypot, atan2, degrees, cos, sin
 
 pygame.init()
 
 class Player(Platformer):
     def __init__(self, x, y, width, height, img, xvel, jump_force):
         super().__init__(x, y, width, height,img,  xvel= xvel, jump_force= jump_force)
+        self.life = 50
 
 class Cactus(Obj):
     def __init__(self, x, y, width, height, img):
         super().__init__(x, y, width, height, img)
+        self.atack = False
+        self.atacks = {'1' : {'time' : 450}}
+        self.actual_atack = '1'
 
 WINDOW_SIZE = (900, 600)
 DISPLAY_SIZE = (int(WINDOW_SIZE[0]/3), int(WINDOW_SIZE[1]/3))
@@ -28,6 +34,7 @@ path = 'assets/images/'
 bg_img = load_img(path + 'background')
 tile1_img = load_img(path + 'tile1')
 tile2_img = load_img(path + 'tile2')
+thorn_img = load_img(path + 'thorn')
 player_idle_imgs = load_imgs_from_past(path + 'player_idle/')
 player_run_imgs = load_imgs_from_past(path + 'player_run/')
 cactus_idle_imgs = load_imgs_from_past(path + 'cactus_idle/')
@@ -61,7 +68,15 @@ cactus = Cactus(cactus_tile.x, cactus_tile.y - cactus_tile.height/2 - 40, 80, 80
 cactus.action = 'idle'
 cactus.add_imgs_data(cactus_idle_imgs, 'idle', [10, 10, 10, 10])
 cactus.add_imgs_data(cactus_atack_imgs, 'atack', [10, 10, 10, 10])
-               
+cactus_idle_time_range = [0, 0]
+cactus_idle_time = randint(cactus_idle_time_range[0], cactus_idle_time_range[1])
+cactus_idle_ticks = 0
+
+
+shots = []
+shots_vel = 2
+shot_ticks = 0
+
 #scroll
 scroll_x, scroll_y = 0, 0
 
@@ -99,9 +114,41 @@ while loop:
     for tile in tiles:
         tile.draw(display, -scroll_x, -scroll_y)
 
-    #cactus
+    #cactus 
     cactus.draw(display, -scroll_x, -scroll_y)
     cactus.anim()
+
+        #look ar Player
+    if player.x < DISPLAY_SIZE[0]/2 + 50:
+        cactus.flipped_x = True
+    else:
+        cactus.flipped_x = False
+
+        #atack
+    if not cactus.atack:
+        cactus_idle_ticks += 1
+        if cactus_idle_ticks >= cactus_idle_time:
+            cactus_idle_ticks = 0
+            cactus_idle_time = randint(cactus_idle_time_range[0], cactus_idle_time_range[1])
+            cactus.atack = True
+            cactus.action = 'atack'
+    else:
+        if cactus.actual_atack == '1':
+            shot_ticks += 1
+            if shot_ticks > 17:
+                shot_ticks = 0
+                hyp = hypot((player.x - cactus.x), (player.y - cactus.y))
+                if  hyp == 0:
+                    c, s = 0, 0
+                else:
+                    c = (player.x - cactus.x) / hyp
+                    s = (player.y - cactus.y) / hyp
+
+                width = 16 
+                height = 6
+                rot_angle = degrees(atan2(-s, c))
+                shot = Obj(cactus.x, cactus.y, width, height, thorn_img)
+                shots.append({'shot' : shot, 'angle' : [c * shots_vel, s * shots_vel], 'rot_angle' : rot_angle})
 
     #player
     player.draw(display, -scroll_x, -scroll_y)
@@ -114,6 +161,26 @@ while loop:
     else:
         player.action = 'idle'
 
+    #shots
+    for i, key in sorted(enumerate(shots), reverse= True):
+        shot = key['shot']
+        angle = key['angle']
+        rot_angle = key['rot_angle']
+
+        shot.draw(display, -scroll_x, -scroll_y, rot_angle)
+        shot.x += angle[0]
+        shot.y += angle[1]
+
+        #outing window
+        if shot.x >= DISPLAY_SIZE[0] + scroll_x + shot.width or shot.x < 0 - scroll_x - shot.width:
+            shots.pop(i)
+
+        if shot.y >= DISPLAY_SIZE[1] + scroll_y + shot.height or shot.y < 0 - scroll_y - shot.height:
+            shots.pop(i)
+        
+        if shot.rect.colliderect(player.rect):
+            shots.pop(i)
+            player.life -= 5
 
     window.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
     pygame.display.update()

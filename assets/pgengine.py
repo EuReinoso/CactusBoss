@@ -72,8 +72,9 @@ class Obj:
         self.flipped_x = False
         self.flipped_y = False
 
-    def draw(self, surface, scroll_x= 0, scroll_y= 0):
+    def draw(self, surface, scroll_x= 0, scroll_y= 0, rot_angle =0):
         img = pygame.transform.flip(self.img, self.flipped_x, self.flipped_y)
+        img = pygame.transform.rotate(self.img, rot_angle)
         surface.blit(img, ( self.x - self.width/2 + scroll_x, self.y - self.height/2 + scroll_y))
 
     def draw_rect(self, surface, color= (255, 255, 255)):
@@ -105,11 +106,6 @@ class Obj:
     def anim(self):
         self.frame_update(len(self.frames_data[self.action]))
         self.img = self.imgs_data[self.action][self.frames_data[self.action][self.frame]]
-
-    def rotate(self, angle):
-        img = pygame.transform.rotate(self.org_img, angle)
-        img.set_colorkey((255, 255, 255))
-        self.img = img
 
     @property
     def rect(self) -> pygame.Rect:
