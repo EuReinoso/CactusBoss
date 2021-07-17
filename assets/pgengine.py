@@ -6,6 +6,7 @@ from random import random, uniform
 
 pygame.init()
 pygame.font.init()
+pygame.mixer.init()
 
 #globals
 GRAVITY = 0.3
@@ -37,12 +38,10 @@ def load_imgs_from_past(past_path, colorkey= None):
     
     return imgs
 
-def get_hit_list(rect, objs):
-    hit_list = []
-    for obj in objs:
-        if rect.colliderect(obj.rect):
-            hit_list.append(obj)
-    return hit_list
+def load_sound(path, vol = 1, format= '.wav'):
+    sound = pygame.mixer.Sound(path + format)
+    sound.set_volume(vol)
+    return sound
 
 def load_map(path):
     tiles_list = []
@@ -55,6 +54,14 @@ def load_map(path):
             valors.append(val)
         tiles_list.append(valors)
     return tiles_list
+
+def get_hit_list(rect, objs):
+    hit_list = []
+    for obj in objs:
+        if rect.colliderect(obj.rect):
+            hit_list.append(obj)
+    return hit_list
+
 
 class Obj:
     def __init__(self, x, y, width, height, img):
@@ -262,6 +269,13 @@ class CircleParticle:
                 self.air = False
                 self.x_momentum  =  cos(uniform(radians(0), radians(360))) 
                 self.y_momentum = sin(uniform(radians(0), radians(360)))
+            if type == 'dexplosion':
+                self.mutation = -0.3
+                self.mass = 0.1
+                self.radius = random() *  radius
+                self.air = False
+                self.x_momentum  =  cos(uniform(radians(0), radians(360))) 
+                self.y_momentum = sin(uniform(radians(0), radians(360)))
             if type == 'fire':
                 self.mutation = - 0.3
                 self.mass = 1
@@ -283,11 +297,11 @@ class CircleParticle:
                 self.y_momentum = sin(uniform(radians(-60), radians(-120))) * 5
 
 
-    def draw(self, surface, flags=0):
+    def draw(self, surface, scroll_x, scroll_y, flags=0):
         temp_surf = pygame.Surface((self.radius * 2, self.radius * 2))
         temp_surf.set_colorkey((0, 0, 0))
         pygame.draw.circle(temp_surf, self.color, (self.radius, self.radius), self.radius)
-        surface.blit(temp_surf, (self.x - self.radius, self.y - self.radius), special_flags= flags)
+        surface.blit(temp_surf, (self.x - self.radius + scroll_x, self.y - self.radius + scroll_y), special_flags= flags)
 
     def update(self):
         self.y += self.y_momentum

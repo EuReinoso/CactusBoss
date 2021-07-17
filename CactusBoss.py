@@ -1,15 +1,37 @@
 import pygame,sys
+from pygame import surface
 from pygame.locals import *
 from assets.pgengine import *
 from random import randint
 from math import hypot, atan2, degrees, cos, sin
 
 pygame.init()
+pygame.font.init()
+pygame.mixer.init()
 
 class Player(Platformer):
     def __init__(self, x, y, width, height, img, xvel, jump_force):
         super().__init__(x, y, width, height,img,  xvel= xvel, jump_force= jump_force)
         self.life = 50
+
+    def control(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                self.right = True
+                self.flipped_x = False
+            if event.key == pygame.K_LEFT:
+                self.left = True
+                self.flipped_x = True
+            if event.key == pygame.K_UP:
+                if self.jumps > 0:
+                    self.jump()
+                    jump_sfx.play()
+                    self.jumps -= 1
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_RIGHT:
+                self.right = False
+            if event.key == pygame.K_LEFT:
+                self.left = False
 
 class Cactus(Obj):
     def __init__(self, x, y, width, height, img):
@@ -32,16 +54,24 @@ map1 = load_map('assets/map.txt')
 #Images
 path = 'assets/images/'
 
-bg_img = load_img(path + 'background')
-tile1_img = load_img(path + 'tile1')
-tile2_img = load_img(path + 'tile2')
-lifebarb_img = load_img(path + 'lifebar_b')
-lifebarg_img = load_img(path + 'lifebar_g')
-thorn_img = load_img(path + 'thorn')
-player_idle_imgs = load_imgs_from_past(path + 'player_idle/')
-player_run_imgs = load_imgs_from_past(path + 'player_run/')
-cactus_idle_imgs = load_imgs_from_past(path + 'cactus_idle/')
+thorn_img         = load_img(path + 'thorn')
+tile1_img         = load_img(path + 'tile1')
+tile2_img         = load_img(path + 'tile2')
+lifebarb_img      = load_img(path + 'lifebar_b')
+lifebarg_img      = load_img(path + 'lifebar_g')
+bg_img            = load_img(path + 'background')
+player_idle_imgs  = load_imgs_from_past(path + 'player_idle/')
+player_run_imgs   = load_imgs_from_past(path + 'player_run/')
+cactus_idle_imgs  = load_imgs_from_past(path + 'cactus_idle/')
 cactus_atack_imgs = load_imgs_from_past(path + 'cactus_atack/')
+
+#sounds
+path = 'assets/sounds/'
+
+jump_sfx      = load_sound(path + 'jump', 0.6)
+shot_sfx      = load_sound(path + 'shot', vol= 0.5)
+thornhit_sfx  = load_sound(path + 'thornhit')
+hitcactus_sfx = load_sound(path + 'hitcactus')
 
 #load_map
 tiles = []
@@ -74,7 +104,7 @@ def main():
     cactus.add_imgs_data(cactus_idle_imgs, 'idle', [10, 10, 10, 10])
     cactus.add_imgs_data(cactus_atack_imgs, 'atack', [10, 10, 10, 10])
     cactus_idle_time_range = [120, 300]
-    cactus_idle_time = randint(cactus_idle_time_range[0], cactus_idle_time_range[1])
+    cactus_idle_time = 60
     cactus_idle_ticks = 0
     atack_ticks = 0
 
@@ -89,8 +119,12 @@ def main():
     shots_vel = 2
     shot_ticks = 0
 
+    particles = []
+
     #scroll
     scroll_x, scroll_y = 0, 0
+    shake_ticks = 0
+    offset = [0, 0]
 
     loop = True
     while loop:
@@ -129,6 +163,10 @@ def main():
         #cactus 
         cactus.draw(display, -scroll_x, -scroll_y)
         cactus.anim()
+        
+            #life
+        if cactus.life <= 0:
+            main()
 
             #look at Player
         if player.x < DISPLAY_SIZE[0]/2 + 50:
@@ -145,17 +183,23 @@ def main():
                 cactus.atack = True
                 cactus.action = 'atack'
             else:
+                draw_text(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
+                draw_text(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
+                draw_text(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
                 if player.rect.right > cactus.rect.left + 15 and player.rect.left < cactus.rect.right - 15:
                     if player.rect.bottom > cactus.rect.top  + 15 and player.rect.top < cactus.rect.top + 15 and player.y_momentum > 0:
                         player.jump()
-                        cactus.life -= 20
-
+                        cactus.life -= 10
+                        shake_ticks = 10
+                        hitcactus_sfx.play()
+                        for _ in range(20):
+                            particles.append(CircleParticle(player.x, player.y + 15, 10, type= 'dexplosion'))
         else:
             atack_ticks += 1
             if atack_ticks < cactus.atacks[cactus.actual_atack]['time']:
                 if cactus.actual_atack == '1':
                     shot_ticks += 1
-                    if shot_ticks > 17:
+                    if shot_ticks > 15:
                         shot_ticks = 0
                         hyp = hypot((player.x - cactus.x), (player.y - cactus.y))
                         if  hyp == 0:
@@ -169,7 +213,8 @@ def main():
                         rot_angle = degrees(atan2(-s, c))
                         shot = Obj(cactus.x, cactus.y, width, height, thorn_img)
                         shots.append({'shot' : shot, 'angle' : [c * shots_vel, s * shots_vel], 'rot_angle' : rot_angle})
-            else:
+                        shot_sfx.play()
+            else:   
                 atack_ticks = 0
                 cactus.atack = False
                 cactus.action = 'idle'
@@ -188,10 +233,6 @@ def main():
         if player.life <= 0:
             main()
 
-        
-                
-
-
         #shots
         for i, key in sorted(enumerate(shots), reverse= True):
             shot = key['shot']
@@ -203,15 +244,24 @@ def main():
             shot.y += angle[1]
 
             #outing window
-            if shot.x >= DISPLAY_SIZE[0] + scroll_x + shot.width or shot.x < 0 - scroll_x - shot.width:
+            if shot.x >= DISPLAY_SIZE[0] + scroll_x + shot.width or shot.x < 0 - scroll_x - shot.width  or shot.y >= DISPLAY_SIZE[1] + scroll_y + shot.height or shot.y < 0 - scroll_y - shot.height:
                 shots.pop(i)
+            else:
+                if shot.rect.colliderect(player.rect):
+                    shots.pop(i)
+                    player.life -= 2
+                    shake_ticks = 5
+                    thornhit_sfx.play()
+                    for _ in range(10):
+                        particles.append(CircleParticle(shot.x, shot.y, 6, type= 'dexplosion'))
 
-            if shot.y >= DISPLAY_SIZE[1] + scroll_y + shot.height or shot.y < 0 - scroll_y - shot.height:
-                shots.pop(i)
-            
-            if shot.rect.colliderect(player.rect):
-                shots.pop(i)
-                player.life -= 2
+        #particles
+        for i, particle in sorted(enumerate(particles), reverse=True):
+            particle.draw(display, -scroll_x, -scroll_y)
+            particle.update()
+
+            if particle.radius <= 0:
+                particles.pop(i)
 
         #UI
         pygame.draw.rect(display,(0, 200, 0), player_life_rect)
@@ -222,7 +272,14 @@ def main():
         lifebar_cactus.draw(display)
         cactus_life_rect = [lifebar_cactus.x - lifebar_cactus.width/2 + 10, lifebar_cactus.y - lifebar_cactus.height/2 + 2, cactus.life - 15, 4]
 
-        window.blit(pygame.transform.scale(display, WINDOW_SIZE), (0, 0))
+        #window
+        if shake_ticks > 0:
+            shake_ticks -= 1
+            offset = [randint(-5, 5), randint(-5, 5)]
+        else:
+            offset = [0, 0]
+
+        window.blit(pygame.transform.scale(display, WINDOW_SIZE), (0 + offset[0], 0 + offset[1]))
         pygame.display.update()
         clock.tick(fps)
 
