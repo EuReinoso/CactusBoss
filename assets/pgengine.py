@@ -74,7 +74,7 @@ class Obj:
 
     def draw(self, surface, scroll_x= 0, scroll_y= 0, rot_angle =0):
         img = pygame.transform.flip(self.img, self.flipped_x, self.flipped_y)
-        img = pygame.transform.rotate(self.img, rot_angle)
+        img = pygame.transform.rotate(img, rot_angle)
         surface.blit(img, ( self.x - self.width/2 + scroll_x, self.y - self.height/2 + scroll_y))
 
     def draw_rect(self, surface, color= (255, 255, 255)):
