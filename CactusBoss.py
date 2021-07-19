@@ -34,7 +34,7 @@ class Player(Platformer):
             if event.key == pygame.K_LEFT:
                 self.left = False
 
-class Cactus(Obj):
+class Cactus1(Obj):
     def __init__(self, x, y, width, height, img):
         super().__init__(x, y, width, height, img)
         self.atack = False
@@ -52,8 +52,8 @@ window = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
 display = pygame.Surface(DISPLAY_SIZE)
 
 #maps
-map1         = load_map('assets/map.txt')
-tutorial_map = load_map('assets/tutorial_map.txt')
+map1         = load_map('assets/maps/map1.txt')
+tutorial_map = load_map('assets/maps/tutorial_map.txt')
 
 #Images
 path = 'assets/images/'
@@ -80,9 +80,28 @@ hitcactus_sfx = load_sound(path + 'hitcactus')
 lose_sfx      = load_sound(path + 'lose')
 win_sfx      = load_sound(path + 'win')
 
+font_path = 'assets/fonts/Comodore64.TTF'
+
+def shake_screen(ticks, intense):
+    if ticks > 0:
+        offset = [randint(-intense, intense), randint(-intense, intense)]
+        ticks -= 1
+    else:
+        intense = 0
+        offset = [0, 0]
+    return offset, ticks
+
+def scroll_limit(scroll, limit):
+    if scroll < limit[0]:
+        scroll = limit[0]
+    elif scroll > limit[1]:
+        scroll = limit[1]
+    
+    return scroll
+
 def level1():
     pygame.mixer.music.set_volume(0.1)
-    pygame.mixer.music.play(-1) 
+    #pygame.mixer.music.play(-1) 
 
     #load_map
     tiles = []
@@ -108,7 +127,7 @@ def level1():
     player.add_imgs_data(player_run_imgs, 'run', [10, 10])
 
     cactus_tile = tiles[96]
-    cactus = Cactus(cactus_tile.x, cactus_tile.y - cactus_tile.height/2 - 40, 80, 80, img= cactus_idle_imgs[0])
+    cactus = Cactus1(cactus_tile.x, cactus_tile.y - cactus_tile.height/2 - 40, 80, 80, img= cactus_idle_imgs[0])
     cactus.action = 'idle'
     cactus.actual_atack = choice(cactus.atacks_list)
     cactus.actual_atack = '3'
@@ -135,6 +154,7 @@ def level1():
     #scroll
     scroll_x, scroll_y = 0, 0
     shake_ticks = 0
+    shake_intense = 0
     offset = [0, 0]
 
     status = ''
@@ -142,20 +162,6 @@ def level1():
     loop = True
     while loop:
 
-        scroll_x += int((player.x - scroll_x - DISPLAY_SIZE[0]/2)/10)
-        scroll_y += int((player.y - scroll_y - DISPLAY_SIZE[1]/2)/30)
-        
-        if scroll_x >= DISPLAY_SIZE[0]/2.8:
-            scroll_x = DISPLAY_SIZE[0]/2.8
-        
-        if scroll_x <= -8:
-            scroll_x = -8
-
-        if scroll_y >= DISPLAY_SIZE[1]/5:
-            scroll_y = int(DISPLAY_SIZE[1]/5)
-        
-        if scroll_y <= 30:
-            scroll_y = 30
 
 
         display.fill((0, 0, 0))
@@ -198,9 +204,9 @@ def level1():
                 cactus.atack = True
                 cactus.action = 'atack'
             else:
-                draw_text(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
-                draw_text(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
-                draw_text(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
+                draw_text(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+                draw_text(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+                draw_text(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font= font_path, color= (0, 0, 0))
                 if player.rect.right > cactus.rect.left + 22 and player.rect.left < cactus.rect.right - 17:
                     if player.rect.bottom > cactus.rect.top  + 15 and player.rect.top < cactus.rect.top + 15 and player.y_momentum > 0:
                         player.jump()
@@ -306,10 +312,12 @@ def level1():
             if shot.x >= DISPLAY_SIZE[0] + scroll_x + shot.width or shot.x < 0 - scroll_x - shot.width  or shot.y >= DISPLAY_SIZE[1] + scroll_y + shot.height or shot.y < 0 - scroll_y - shot.height:
                 shots.pop(i)
             else:
+                #shot player
                 if shot.rect.colliderect(player.rect):
                     shots.pop(i)
                     player.life -= 2
                     shake_ticks = 5
+                    shake_intense = 5
                     thornhit_sfx.play()
                     for _ in range(10):
                         particles.append(CircleParticle(shot.x, shot.y, 6, type= 'dexplosion'))
@@ -331,14 +339,14 @@ def level1():
         lifebar_cactus.draw(display)
         cactus_life_rect = [lifebar_cactus.x - lifebar_cactus.width/2 + 10, lifebar_cactus.y - lifebar_cactus.height/2 + 2, cactus.life - 15, 4]
 
-
-
         #window
-        if shake_ticks > 0:
-            shake_ticks -= 1
-            offset = [randint(-5, 5), randint(-5, 5)]
-        else:
-            offset = [0, 0]
+        scroll_x += int((player.x - scroll_x - DISPLAY_SIZE[0]/2)/10)
+        scroll_y += int((player.y - scroll_y - DISPLAY_SIZE[1]/2)/30)
+        
+        scroll_x = scroll_limit(scroll_x, (-8, int(DISPLAY_SIZE[0]/2.8)))
+        scroll_y = scroll_limit(scroll_y, (30, int(DISPLAY_SIZE[1]/5)))
+
+        offset, shake_ticks = shake_screen(shake_ticks, shake_intense)
 
         window.blit(pygame.transform.scale(display, WINDOW_SIZE), (0 + offset[0], 0 + offset[1]))
         pygame.display.update()
@@ -370,8 +378,8 @@ def menu(text):
         bg.draw(display, offset[0], offset[1])
 
         #UI
-        draw_text(display, text, display.get_rect().center[0] - 100, display.get_rect().center[1], 30, font= 'assets/Comodore64.TTF')
-        draw_text(display, 'SPACE TO PLAY AGAIN', display.get_rect().center[0] - 110, display.get_rect().center[1] + 40, 15, font= 'assets/Comodore64.TTF')
+        draw_text(display, text, display.get_rect().center[0] - 100, display.get_rect().center[1], 30, font= font_path)
+        draw_text(display, 'SPACE TO PLAY AGAIN', display.get_rect().center[0] - 110, display.get_rect().center[1] + 40, 15, font= font_path)
         if shake:
             offset = [randint(-1, 1), randint(-1, 1)]
         else:
@@ -396,7 +404,6 @@ def tutorial():
                 tiles.append(Obj(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, tile1_img))
             if val == '2':
                 tiles.append(Obj(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE, tile2_img))
-
             x += 1
         y += 1
 
@@ -412,7 +419,7 @@ def tutorial():
     player.add_imgs_data(player_run_imgs, 'run', [10, 10])
 
     cactus_tile = tiles[68]
-    cactus = Cactus(cactus_tile.x, cactus_tile.y - cactus_tile.height/2 - 40, 80, 80, img= cactus_idle_imgs[0])
+    cactus = Cactus1(cactus_tile.x, cactus_tile.y - cactus_tile.height/2 - 40, 80, 80, img= cactus_idle_imgs[0])
     cactus.action = 'idle'
     cactus.add_imgs_data(cactus_idle_imgs, 'idle', [10, 10, 10, 10])
 
@@ -422,6 +429,7 @@ def tutorial():
     #scroll
     scroll_x, scroll_y = 0, 0
     shake_ticks = 0
+    shake_intense = 0
     offset = [0, 0]
     loop = True
     while loop:
@@ -443,17 +451,17 @@ def tutorial():
             tile.draw(display, -scroll_x, -scroll_y)
 
         #UI
-        draw_text(display, 'DOUBLE JUMP!', 250 - scroll_x, 50 - scroll_y, 10, font='assets/Comodore64.TTF', color= (0, 0, 0))
-        draw_text(display, '------------>', 240 - scroll_x, 60 - scroll_y, 10, font='assets/Comodore64.TTF', color= (0, 0, 0)) 
+        draw_text(display, 'DOUBLE JUMP!', 250 - scroll_x, 50 - scroll_y, 10, font= font_path, color= (0, 0, 0))
+        draw_text(display, '------------>', 240 - scroll_x, 60 - scroll_y, 10, font= font_path, color= (0, 0, 0)) 
 
         # cactus
         cactus.draw(display, -scroll_x, -scroll_y)
         cactus.anim()
         
-        draw_text(display, 'JUMP', cactus.x - scroll_x - 20, cactus.y - 100 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
-        draw_text(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
-        draw_text(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
-        draw_text(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font='assets/Comodore64.TTF', color= (0, 0, 0))
+        draw_text(display, 'JUMP', cactus.x - scroll_x - 20, cactus.y - 100 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+        draw_text(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+        draw_text(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+        draw_text(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font= font_path, color= (0, 0, 0))
         if player.rect.right > cactus.rect.left + 15 and player.rect.left < cactus.rect.right - 15:
             if player.rect.bottom > cactus.rect.top  + 15 and player.rect.top < cactus.rect.top + 15 and player.y_momentum > 0:
                 player.jump()
@@ -462,6 +470,7 @@ def tutorial():
                 for _ in range(20):
                     particles.append(CircleParticle(player.x, player.y + 15, 10, type= 'dexplosion'))
                 loop = False
+
         #player
         player.draw(display, -scroll_x, -scroll_y)
         player.update()
@@ -488,22 +497,10 @@ def tutorial():
         scroll_x += int((player.x - scroll_x - DISPLAY_SIZE[0]/2)/10)
         scroll_y += int((player.y - scroll_y - DISPLAY_SIZE[1]/2)/30)
         
-        if scroll_x >= DISPLAY_SIZE[0]:
-            scroll_x = DISPLAY_SIZE[0]        
-        if scroll_x <= -8:
-            scroll_x = -8
+        scroll_x = scroll_limit(scroll_x, (-8, DISPLAY_SIZE[0]))
+        scroll_y = scroll_limit(scroll_y, (-30, -30))
 
-        if scroll_y >= -1000:
-            scroll_y = -1000
-        
-        if scroll_y <= -30:
-            scroll_y = -30
-
-        if shake_ticks > 0:
-            shake_ticks -= 1
-            offset = [randint(-5, 5), randint(-5, 5)]
-        else:
-            offset = [0, 0]
+        offset, shake_ticks = shake_screen(shake_ticks, shake_intense)
 
         window.blit(pygame.transform.scale(display, WINDOW_SIZE), (0 + offset[0], 0 + offset[1]))
         pygame.display.update()
