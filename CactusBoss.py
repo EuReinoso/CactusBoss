@@ -37,11 +37,69 @@ class Player(Platformer):
 class Cactus1(Obj):
     def __init__(self, x, y, width, height, img):
         super().__init__(x, y, width, height, img)
-        self.atack = False
-        self.atacks = {'1' : {'time' : 560}, '2' : {'time' : 450}, '3': {'time' : 450}}
+        self.is_atack = False
+        self.atack_ticks = 0
+        self.atacks = { '1' : {'time' : 560}, 
+                        '2' : {'time' : 450}, 
+                        '3': {'time' : 450}}
         self.atacks_list = ['1', '2', '3']
         self.actual_atack = '1'
         self.life = 200
+        self.shot_ticks = 0
+
+    def atack1(self, player, shots, shots_vel):
+        self.shot_ticks  += 1
+        if self.shot_ticks > 12:
+            self.shot_ticks = 0
+            hyp = hypot((player.x - self.x), (player.y - self.y))
+            if  hyp == 0:
+                c, s = 0, 0
+            else:
+                c = (player.x - self.x) / hyp *  shots_vel
+                s = (player.y - self.y) / hyp * shots_vel
+            width = 16 
+            height = 6
+            rot_angle = degrees(atan2(-s, c))
+            shot = Obj(self.x, self.y, width, height, thorn_img)
+            shots.append({'shot' : shot, 'angle' : [c , s ], 'rot_angle' : rot_angle})
+            shot_sfx.play()
+
+    def atack2(self, shots, shots_vel):
+        self.shot_ticks += 1
+        if self.shot_ticks > 2:
+            self.shot_ticks = 0
+            
+            c =  cos(radians(uniform(0, 360))) * shots_vel 
+            s =  sin(radians(uniform(0, 360))) * shots_vel
+
+            while abs(c) < shots_vel and abs(s) < shots_vel:
+                c *= 1.01
+                s *= 1.01
+
+            width = 16 
+            height = 6
+            rot_angle = degrees(atan2(-s, c))
+            shot = Obj(self.x, self.y, width, height, thorn_img)
+            shots.append({'shot' : shot, 'angle' : [c , s], 'rot_angle' : rot_angle})
+            shot_sfx.play()
+    
+    def atack3(self, shots, shots_vel):
+        self.shot_ticks += 1
+        if self.shot_ticks > 25:
+            self.shot_ticks = 0
+
+            angle = randint(0, 30)
+            space = randint(360/20, 360/10)
+            for _ in range(int(360/space)):
+                c =  cos(radians(angle)) * shots_vel
+                s =  sin(radians(angle)) * shots_vel
+                angle -= space
+                width = 16 
+                height = 6
+                rot_angle = degrees(atan2(-s, c))
+                shot = Obj(self.x, self.y, width, height, thorn_img)
+                shots.append({'shot' : shot, 'angle' : [c , s], 'rot_angle' : rot_angle})
+            shot_sfx.play()
 
 WINDOW_SIZE = (900, 600)
 DISPLAY_SIZE = (int(WINDOW_SIZE[0]/3), int(WINDOW_SIZE[1]/3))
@@ -82,26 +140,9 @@ win_sfx      = load_sound(path + 'win')
 
 font_path = 'assets/fonts/Comodore64.TTF'
 
-def shake_screen(ticks, intense):
-    if ticks > 0:
-        offset = [randint(-intense, intense), randint(-intense, intense)]
-        ticks -= 1
-    else:
-        intense = 0
-        offset = [0, 0]
-    return offset, ticks
-
-def scroll_limit(scroll, limit):
-    if scroll < limit[0]:
-        scroll = limit[0]
-    elif scroll > limit[1]:
-        scroll = limit[1]
-    
-    return scroll
-
 def level1():
     pygame.mixer.music.set_volume(0.1)
-    #pygame.mixer.music.play(-1) 
+    pygame.mixer.music.play(-1) 
 
     #load_map
     tiles = []
@@ -130,13 +171,11 @@ def level1():
     cactus = Cactus1(cactus_tile.x, cactus_tile.y - cactus_tile.height/2 - 40, 80, 80, img= cactus_idle_imgs[0])
     cactus.action = 'idle'
     cactus.actual_atack = choice(cactus.atacks_list)
-    cactus.actual_atack = '3'
     cactus.add_imgs_data(cactus_idle_imgs, 'idle', [10, 10, 10, 10])
     cactus.add_imgs_data(cactus_atack_imgs, 'atack', [10, 10, 10, 10])
-    cactus_idle_time_range = [120, 300]
+    cactus_idle_time_range = [150, 400]
     cactus_idle_time = 60
     cactus_idle_ticks = 0
-    atack_ticks = 0
 
 
     lifebar_player = Obj(int(DISPLAY_SIZE[0] * 0.1), int(DISPLAY_SIZE[1] * 0.95), player.life, 10, img= lifebarb_img)
@@ -147,7 +186,6 @@ def level1():
 
     shots = []
     shots_vel = 2
-    shot_ticks = 0
 
     particles = []
 
@@ -161,8 +199,6 @@ def level1():
 
     loop = True
     while loop:
-
-
 
         display.fill((0, 0, 0))
 
@@ -184,7 +220,7 @@ def level1():
         cactus.anim()
         
             #life
-        if cactus.life <= 0:
+        if cactus.life <= 2:
             loop = False
             status = 'You Win!'
             win_sfx.play()
@@ -196,89 +232,40 @@ def level1():
             cactus.flipped_x = False
 
             #atack
-        if not cactus.atack:
+        if not cactus.is_atack:
             cactus_idle_ticks += 1
             if cactus_idle_ticks >= cactus_idle_time:
                 cactus_idle_ticks = 0
                 cactus_idle_time = randint(cactus_idle_time_range[0], cactus_idle_time_range[1])
-                cactus.atack = True
+                cactus.is_atack = True
                 cactus.action = 'atack'
             else:
-                draw_text(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font= font_path, color= (0, 0, 0))
-                draw_text(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font= font_path, color= (0, 0, 0))
-                draw_text(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+                draw_text_font(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+                draw_text_font(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+                draw_text_font(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font= font_path, color= (0, 0, 0))
                 if player.rect.right > cactus.rect.left + 22 and player.rect.left < cactus.rect.right - 17:
                     if player.rect.bottom > cactus.rect.top  + 15 and player.rect.top < cactus.rect.top + 15 and player.y_momentum > 0:
                         player.jump()
                         cactus.life -= 5
-                        shake_ticks = 10
+                        shake_ticks, shake_intense = 10, 10
                         hitcactus_sfx.play()
                         for _ in range(20):
                             particles.append(CircleParticle(player.x, player.y + 15, 10, type= 'dexplosion'))
         else:
-            atack_ticks += 1
-            if atack_ticks < cactus.atacks[cactus.actual_atack]['time'] and atack_ticks > 60:
+            cactus.atack_ticks += 1
+            if cactus.atack_ticks < cactus.atacks[cactus.actual_atack]['time'] and cactus.atack_ticks > 60:
                 if cactus.actual_atack == '1':
-                    shot_ticks += 1
-                    if shot_ticks > 12:
-                        shot_ticks = 0
-                        hyp = hypot((player.x - cactus.x), (player.y - cactus.y))
-                        if  hyp == 0:
-                            c, s = 0, 0
-                        else:
-                            c = (player.x - cactus.x) / hyp *  shots_vel
-                            s = (player.y - cactus.y) / hyp * shots_vel
-
-                        width = 16 
-                        height = 6
-                        rot_angle = degrees(atan2(-s, c))
-                        shot = Obj(cactus.x, cactus.y, width, height, thorn_img)
-                        shots.append({'shot' : shot, 'angle' : [c , s ], 'rot_angle' : rot_angle})
-                        shot_sfx.play()
+                    cactus.atack1(player, shots, shots_vel)
 
                 if cactus.actual_atack == '2':
-                    shot_ticks += 1
-                    if shot_ticks > 2:
-                        shot_ticks = 0
-                        c =  cos(radians(uniform(0, 360))) * shots_vel 
-                        s =  sin(radians(uniform(0, 360))) * shots_vel
-                        if abs(c) < 0:
-                            c *= 10 * c
-                        if abs(s) < 0:
-                            s *= 10 * s 
-
-                        width = 16 
-                        height = 6
-                        rot_angle = degrees(atan2(-s, c))
-                        shot = Obj(cactus.x, cactus.y, width, height, thorn_img)
-                        shots.append({'shot' : shot, 'angle' : [c , s], 'rot_angle' : rot_angle})
-                        shot_sfx.play()
+                    cactus.atack2(shots, shots_vel)
 
                 if cactus.actual_atack == '3':
-                    shot_ticks += 1
-                    if shot_ticks > 10:
-                        if sin(radians(atack_ticks * 100)) > 0:
-                            angle = 0
-                        else:
-                            angle = 13
-        
+                    cactus.atack3(shots, shots_vel)
 
-                        shot_ticks = 0
-                        space = 20
-                        for _ in range(int(360/space)):
-                            c =  cos(radians(angle)) * shots_vel
-                            s =  sin(radians(angle)) * shots_vel
-                            angle -= space
-                            width = 16 
-                            height = 6
-                            rot_angle = degrees(atan2(-s, c))
-                            shot = Obj(cactus.x, cactus.y, width, height, thorn_img)
-                            shots.append({'shot' : shot, 'angle' : [c , s], 'rot_angle' : rot_angle})
-                        shot_sfx.play()
-
-            if atack_ticks > cactus.atacks[cactus.actual_atack]['time']:   
-                atack_ticks = 0
-                cactus.atack = False
+            if cactus.atack_ticks > cactus.atacks[cactus.actual_atack]['time']:   
+                cactus.atack_ticks = 0
+                cactus.is_atack = False
                 cactus.action = 'idle'
                 cactus.actual_atack = choice(cactus.atacks_list)
 
@@ -293,7 +280,7 @@ def level1():
         else:
             player.action = 'idle'
 
-        if player.life <= 0:
+        if player.life <= 2:
             loop = False
             status = 'You Lose!'
             lose_sfx.play()
@@ -316,8 +303,7 @@ def level1():
                 if shot.rect.colliderect(player.rect):
                     shots.pop(i)
                     player.life -= 2
-                    shake_ticks = 5
-                    shake_intense = 5
+                    shake_ticks, shake_intense = 5, 5
                     thornhit_sfx.play()
                     for _ in range(10):
                         particles.append(CircleParticle(shot.x, shot.y, 6, type= 'dexplosion'))
@@ -339,6 +325,8 @@ def level1():
         lifebar_cactus.draw(display)
         cactus_life_rect = [lifebar_cactus.x - lifebar_cactus.width/2 + 10, lifebar_cactus.y - lifebar_cactus.height/2 + 2, cactus.life - 15, 4]
 
+        draw_fps(display, 3, 3, 7, font_path)
+
         #window
         scroll_x += int((player.x - scroll_x - DISPLAY_SIZE[0]/2)/10)
         scroll_y += int((player.y - scroll_y - DISPLAY_SIZE[1]/2)/30)
@@ -346,7 +334,7 @@ def level1():
         scroll_x = scroll_limit(scroll_x, (-8, int(DISPLAY_SIZE[0]/2.8)))
         scroll_y = scroll_limit(scroll_y, (30, int(DISPLAY_SIZE[1]/5)))
 
-        offset, shake_ticks = shake_screen(shake_ticks, shake_intense)
+        offset, shake_ticks,shake_intense = shake_screen(shake_ticks, shake_intense)
 
         window.blit(pygame.transform.scale(display, WINDOW_SIZE), (0 + offset[0], 0 + offset[1]))
         pygame.display.update()
@@ -378,8 +366,8 @@ def menu(text):
         bg.draw(display, offset[0], offset[1])
 
         #UI
-        draw_text(display, text, display.get_rect().center[0] - 100, display.get_rect().center[1], 30, font= font_path)
-        draw_text(display, 'SPACE TO PLAY AGAIN', display.get_rect().center[0] - 110, display.get_rect().center[1] + 40, 15, font= font_path)
+        draw_text_font(display, text, display.get_rect().center[0] - 100, display.get_rect().center[1], 30, font= font_path)
+        draw_text_font(display, 'SPACE TO PLAY AGAIN', display.get_rect().center[0] - 110, display.get_rect().center[1] + 40, 15, font= font_path)
         if shake:
             offset = [randint(-1, 1), randint(-1, 1)]
         else:
@@ -451,17 +439,17 @@ def tutorial():
             tile.draw(display, -scroll_x, -scroll_y)
 
         #UI
-        draw_text(display, 'DOUBLE JUMP!', 250 - scroll_x, 50 - scroll_y, 10, font= font_path, color= (0, 0, 0))
-        draw_text(display, '------------>', 240 - scroll_x, 60 - scroll_y, 10, font= font_path, color= (0, 0, 0)) 
+        draw_text_font(display, 'DOUBLE JUMP!', 250 - scroll_x, 50 - scroll_y, 10, font= font_path, color= (0, 0, 0))
+        draw_text_font(display, '------------>', 240 - scroll_x, 60 - scroll_y, 10, font= font_path, color= (0, 0, 0)) 
 
         # cactus
         cactus.draw(display, -scroll_x, -scroll_y)
         cactus.anim()
         
-        draw_text(display, 'JUMP', cactus.x - scroll_x - 20, cactus.y - 100 - scroll_y, 15, font= font_path, color= (0, 0, 0))
-        draw_text(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font= font_path, color= (0, 0, 0))
-        draw_text(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font= font_path, color= (0, 0, 0))
-        draw_text(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+        draw_text_font(display, 'JUMP', cactus.x - scroll_x - 20, cactus.y - 100 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+        draw_text_font(display, 'ATACK!', cactus.x - scroll_x - 20, cactus.y - 80 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+        draw_text_font(display, '|', cactus.x - scroll_x, cactus.y - 60 - scroll_y, 15, font= font_path, color= (0, 0, 0))
+        draw_text_font(display, 'v', cactus.x - scroll_x, cactus.y - 50 - scroll_y, 15, font= font_path, color= (0, 0, 0))
         if player.rect.right > cactus.rect.left + 15 and player.rect.left < cactus.rect.right - 15:
             if player.rect.bottom > cactus.rect.top  + 15 and player.rect.top < cactus.rect.top + 15 and player.y_momentum > 0:
                 player.jump()
@@ -493,6 +481,7 @@ def tutorial():
         #UI
         arrow.draw(display, -scroll_x, -scroll_y)
 
+        
         #window
         scroll_x += int((player.x - scroll_x - DISPLAY_SIZE[0]/2)/10)
         scroll_y += int((player.y - scroll_y - DISPLAY_SIZE[1]/2)/30)
@@ -500,7 +489,7 @@ def tutorial():
         scroll_x = scroll_limit(scroll_x, (-8, DISPLAY_SIZE[0]))
         scroll_y = scroll_limit(scroll_y, (-30, -30))
 
-        offset, shake_ticks = shake_screen(shake_ticks, shake_intense)
+        offset, shake_ticks, shake_intense = shake_screen(shake_ticks, shake_intense)
 
         window.blit(pygame.transform.scale(display, WINDOW_SIZE), (0 + offset[0], 0 + offset[1]))
         pygame.display.update()

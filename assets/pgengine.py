@@ -1,8 +1,8 @@
 import pygame
-from math import sin, cos, pi, radians, degrees
+from math import sin, cos, radians
 from pygame.locals import *
 from os import walk
-from random import random, uniform
+from random import random, uniform, randint
 
 pygame.init()
 pygame.font.init()
@@ -17,9 +17,12 @@ fps = 60
 clock = pygame.time.Clock()
 
 # Utility Stuff ---------------------------------------------------------------------------------#
-def draw_text(surface, text, x, y, size, font= 'calibri', color= (0, 0, 0)):
+def draw_fps(surface, x, y, size, font, color= (0, 0, 0)):
+    draw_text_font(surface, str(int(clock.get_fps())), x, y, size, font, color)
+
+def draw_text_font(surface, text, x, y, size, font , color= (0, 0, 0)):
     text_font = pygame.font.Font(font, size)
-    render = text_font.render(text, True, color)
+    render = text_font.render(text, False, color)
     surface.blit(render, (x, y))
 
 def load_img(path, colorkey= None, type = 'png'):
@@ -61,6 +64,22 @@ def get_hit_list(rect, objs):
         if rect.colliderect(obj.rect):
             hit_list.append(obj)
     return hit_list
+
+def shake_screen(ticks, intense):
+    if ticks > 0:
+        offset = [randint(-intense, intense), randint(-intense, intense)]
+        ticks -= 1
+    else:
+        intense = 0
+        offset = [0, 0]
+    return offset, ticks, intense
+
+def scroll_limit(scroll, limit):
+    if scroll < limit[0]:
+        scroll = limit[0]
+    elif scroll > limit[1]:
+        scroll = limit[1]
+    return scroll
 
 
 class Obj:
@@ -113,6 +132,13 @@ class Obj:
     def anim(self):
         self.frame_update(len(self.frames_data[self.action]))
         self.img = self.imgs_data[self.action][self.frames_data[self.action][self.frame]]
+    
+    def perfect_collide(self, obj) -> bool:
+        return self.mask.overlap(obj.mask, (obj.rect.topleft[0] - self.rect.topleft[0], obj.rect.topleft[1] - self.rect.topleft[1]))
+
+    @property
+    def mask(self) -> pygame.mask.Mask:
+        return pygame.mask.from_surface(self.img.convert_alpha())
 
     @property
     def rect(self) -> pygame.Rect:
