@@ -194,6 +194,30 @@ class Rigidbody(Obj):
         if self.gravity:
             self.y_momentum += GRAVITY * self.mass
 
+    def collision_move(self, tiles):
+        self.collide = {'top':False,'bottom':False,'right':False,'left':False}
+        self.x += self.x_momentum
+        hit_list = get_hit_list(self.rect, tiles)
+        for tile in hit_list:
+            if self.x_momentum > 0:
+                self.collide['right'] = True
+                self.x = tile.rect.left - self.width/2
+            elif self.x_momentum < 0:
+                self.collide['left'] = True
+                self.x = tile.rect.right + self.width/2
+        self.y += self.y_momentum
+        hit_list = get_hit_list(self.rect, tiles)
+        for tile in hit_list:
+            if self.y_momentum > 0:
+                self.collide['bottom'] = True
+                self.y = tile.rect.top - self.height/2
+                self.y_momentum = 0
+            elif self.y_momentum < 0:
+                self.collide['top'] = True
+                self.y = tile.rect.bottom + self.height/2  
+                self.y_momentum = 0  
+
+    
 
 class Platformer(Rigidbody):
     def __init__(self, x, y, width, height, img, jump_force= 5, xvel= 1.5, total_jumps= 2):
@@ -201,9 +225,10 @@ class Platformer(Rigidbody):
         self.right = False
         self.left = False
         self.xvel = xvel
-        self.jump_force = jump_force
         self.total_jumps = total_jumps
-        self.jumps = 1
+        self.jump_force = jump_force
+        self.jumps = 0
+        
 
     def control(self, event):
         if event.type == pygame.KEYDOWN:
@@ -256,13 +281,13 @@ class Platformer(Rigidbody):
             elif self.y_momentum < 0:
                 self.collide['top'] = True
                 self.y = tile.rect.bottom + self.height/2  
-                self.y_momentum = 0              
-   
+                self.y_momentum = 0  
+
     def jump(self):
         self.y_momentum = - self.jump_force  
 
 class CircleParticle:
-    def __init__(self, x, y, radius, x_momentum= 0, y_momentum = 0, mass = 1, mutation= -0.5, air = True, gravity= True, type= None,  color= (255, 255, 255)):
+    def __init__(self, x, y, radius, x_momentum= 0, y_momentum = 0, mass = 1, mutation= -0.5, air = True, gravity= True, vel = 0, type= None,  color= (255, 255, 255)):
         self.x = x
         self.y = y
         self.radius = radius
@@ -273,6 +298,7 @@ class CircleParticle:
         self.gravity = gravity
         self.y_momentum = y_momentum
         self.x_momentum = x_momentum
+        self.vel = vel
 
         if type != None:
             if type == 'tinysmoke':
@@ -300,8 +326,9 @@ class CircleParticle:
                 self.mass = 0.1
                 self.radius = random() *  radius
                 self.air = False
-                self.x_momentum  =  cos(uniform(radians(0), radians(360))) 
-                self.y_momentum = sin(uniform(radians(0), radians(360)))
+                self.vel = 3
+                self.x_momentum  =  cos(uniform(radians(0), radians(360))) * self.vel
+                self.y_momentum = sin(uniform(radians(0), radians(360))) * self.vel
             if type == 'fire':
                 self.mutation = - 0.3
                 self.mass = 1
