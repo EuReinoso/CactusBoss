@@ -1,7 +1,9 @@
 import pygame
 from math import sin, cos, radians
-from os import walk
 from random import random, uniform, randint
+from typing import Type
+
+from pygame.constants import FULLSCREEN
 
 pygame.init()
 pygame.font.init()
@@ -26,22 +28,6 @@ def draw_text(surface, text, x, y, size, font = None, color= (0, 0, 0)):
     text_font = pygame.font.Font(font, size)
     render = text_font.render(text, False, color)
     surface.blit(render, (x, y))
-
-def load_img(path, colorkey= None, type = 'png'):
-    if colorkey == None:
-        image = pygame.image.load(path + '.' + type).convert_alpha()
-    else:
-        image = pygame.image.load(path + '.' + type).convert()
-        image.set_colorkey(colorkey)
-    return image
-
-def load_imgs_from_past(past_path, colorkey= None):
-    imgs = []
-    for _, _, archives in walk(past_path):
-        for path_archive in archives:
-            imgs.append(load_img(past_path  + path_archive, type= '', colorkey= colorkey))
-    
-    return imgs
 
 def load_sound(path, vol = 1, format= '.wav'):
     sound = pygame.mixer.Sound(path + format)
@@ -82,12 +68,108 @@ def scroll_limit(scroll, limit):
     elif scroll > limit[1]:
         scroll = limit[1]
 
-class Window:
-    def __int__(self, width, height):
-        self.width = width
-        self.height = height
-        pygame.display.set_mode((self.width, self.height))        
+#IMAGESMANAGER
+from os import walk
 
+def load_img(path, a_type = 'png', colorkey= None):
+    if colorkey == None:
+        image = pygame.image.load(path + '.' + a_type).convert_alpha()
+    else:
+        image = pygame.image.load(path + '.' + a_type).convert()
+        image.set_colorkey(colorkey)
+    return image
+
+def load_imgs_from_past(past_path, colorkey= None):
+    imgs = []
+    for _, _, files in walk(past_path):
+        for file in files:
+            imgs.append(load_img(past_path  + file, a_type= '', colorkey= colorkey))
+    
+    return imgs
+
+class ImgsManager:
+    def __init__(self):
+        self.imgs = {}
+        self.animations = {}
+
+    def add_img(self, path : str, name : str, a_type : str = 'png', colorkey= None):
+        if colorkey == None:
+            image = pygame.image.load(path + '.' + a_type).convert_alpha()
+        else:
+            image = pygame.image.load(path + '.' + a_type).convert()
+            image.set_colorkey(colorkey)
+
+        self.imgs[name] = image
+
+    def add_imgs_from_past(self, past_path : str, a_type= 'png' , colorkey= None):
+        for _, _, files in walk(past_path):
+            for file in files:
+                file = file.removesuffix('.' + a_type)
+                img = load_img(past_path  + file, a_type= a_type, colorkey= colorkey)
+                self.imgs[file] = img
+            break
+
+    def add_animations_from_past(self, past_path : str, a_type= 'png', colorkey= None):
+        """
+        Given the path to an "animations" folder, 
+        it navigates through all the folders inside it.
+        And it adds a key to the self.animations attribute,
+        that contains a list of all the images in the folder.
+        The key for each images list is accessed by folder name.
+
+        Issue:
+            Split this method into two.
+        """
+        for root, dirs, _ in walk(past_path):
+            for dir_name in dirs:
+                imgs = []
+                for _, _, files in walk(root + dir_name + '/'):
+                    for file in files:
+                        file = file.removesuffix('.' + a_type)
+                        path = past_path + dir_name + '/' + file
+                        img = load_img(path, a_type= a_type, colorkey= colorkey)
+                        imgs.append(img)
+                    break
+                self.animations[dir_name] = imgs
+
+#WINDOW MODULE
+FULLSCREEN_SIZE = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+
+class Window:
+    def __init__(self, width, height):
+        self._width  = width
+        self._height = height
+        self.screen  = pygame.display.set_mode((width, height))
+        self.display = pygame.Surface((int(width/3), int(height/3)))
+
+        self.fullscreen = False
+
+    def resize(self, width, height):
+        self._width = width
+        self._height = height
+        self.screen = pygame.display.set_mode((width, height))
+    
+    def blit_display(self):
+        if self.fullscreen:
+            pos_x = int(FULLSCREEN_SIZE[0]/2 - self.width/2)
+            pos_y = int(FULLSCREEN_SIZE[1]/2 - self.height/2)
+            self.screen.blit(pygame.transform.scale(self.display, (self.width, self.height)), (pos_x, pos_y))
+        else:
+            self.screen.blit(pygame.transform.scale(self.display, (self.width, self.height)), (0, 0))
+
+    def get_size(self):
+        return (self.width, self.height)
+
+    def get_center(self):
+        return (self.width/2, self.height/2)
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
 
 class Obj:
     def __init__(self, x, y, width, height, img):

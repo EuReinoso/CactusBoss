@@ -1,18 +1,21 @@
-import pygame, sys
+import pygame, sys, os
 pygame.init()
 
 from scripts.scenes.level1 import Level1
+from scripts.pgengine import clock, Window, ImgsManager
 
-WINDOW_SIZE = (900, 600)
-DISPLAY_SIZE = (int(WINDOW_SIZE[0]/3), int(WINDOW_SIZE[1]/3))
 
 class Game:
     def __init__(self):
-        print('window')
-        self.window = pygame.display.set_mode(WINDOW_SIZE)
-        self.display = pygame.Surface(DISPLAY_SIZE)
+        self.window  = Window(900, 600)
 
-        self.scenes = {'level1' : Level1(self.display)}
+        #IMAGES
+        imgs_path = 'assets/images/'
+        self.imgs_mng = ImgsManager()
+        self.imgs_mng.add_imgs_from_past(imgs_path)
+        self.imgs_mng.add_animations_from_past(imgs_path + 'animations/')
+
+        self.scenes = {'level1' : Level1(self)}
         self.actual_scene = self.scenes['level1']
 
     def update(self):
@@ -21,8 +24,9 @@ class Game:
             self.actual_scene.draw()
             self.actual_scene.update()
 
-            self.window.blit(pygame.transform.scale(self.display, WINDOW_SIZE), (0, 0))
+            self.window.blit_display()
             pygame.display.update()
+            clock.tick(60)
         
         pygame.quit()
         sys.exit()
