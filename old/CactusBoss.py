@@ -14,6 +14,7 @@ class Player(Platformer):
     def __init__(self, x, y, width, height, img, xvel, jump_force):
         super().__init__(x, y, width, height,img,  xvel= xvel, jump_force= jump_force)
         self.life = 50
+        self.imun_time = 0
 
     def control(self, event):
         if event.type == pygame.KEYDOWN:
@@ -259,7 +260,8 @@ def level1():
             #life
         if cactus.life <= 2:
             loop = False
-            status = 'You Win!'
+            status = 'won'
+            text_menu = 'You Win!'
             win_sfx.play()
 
             #look at Player
@@ -319,7 +321,8 @@ def level1():
 
         if player.life <= 0:
             loop = False
-            status = 'You Lose!'
+            status = 'lose'
+            text_menu = 'You Lose!'
             lose_sfx.play()
 
         #shots
@@ -377,7 +380,7 @@ def level1():
         pygame.display.update()
         clock.tick(fps)
     
-    return status
+    return status, text_menu
 
 def menu(text):
     pygame.mixer.music.set_volume(0.3)
@@ -504,29 +507,19 @@ def level2():
                 if cactus.actual_atack == '1':
                     if cactus.collide['bottom']:
                         cactus.jump()
-                        shake_ticks = 10
-                        shake_intense = 10
+                        shake_ticks = 5
+                        shake_intense = 5
                         tremor_sfx.play()
                         for _ in range(15):
                             particles.append(CircleParticle(cactus.x, cactus.y + cactus.height/2, 13, type= 'dexplosion'))
                         if player.x > cactus.x:
                             cactus.flipped_x = False
                             cactus.x_momentum = 2
+                            cactus.y_momentum += 3
                         else:
                             cactus.flipped_x = True
                             cactus.x_momentum = - 2
-
-                    if (cactus.collide['right'] and cactus.x_momentum > 8) or (cactus.collide['left'] and cactus.x_momentum < 8):
-                        cactus.atack_ticks = cactus.atacks['1']['time']
-                        cactus.x_momentum = 0
-                        hitcactus_sfx.play()
-                        if cactus.collide['right']:
-                            for _ in range(15):  
-                                particles.append(CircleParticle(cactus.x + cactus.width/2, cactus.y, 13, type= 'dexplosion'))
-                        if cactus.collide['left']:
-                            for _ in range(15):  
-                                particles.append(CircleParticle(cactus.x - cactus.width/2, cactus.y, 13, type= 'dexplosion'))
-
+                            cactus.y_momentum += 3
 
                 if cactus.actual_atack == '2':
                     if cactus.collide['bottom']:
@@ -556,18 +549,24 @@ def level2():
                             cactus.gravity = True
                             cactus.y_momentum += 3
 
+                player.imun_time -= 1
+                if player.perfect_collide(cactus) and player.imun_time < 0:
+                    player.imun_time = 20
+                    player.life -= 2
+                    shake_ticks = 5
+                    shake_intense = 5
+                    for _ in range(10):
+                        particles.append(CircleParticle(player.x, player.y, 8, type= 'dexplosion',color= (200, 0, 0)))
+                    hitcactus_sfx.play()
+
             if cactus.atack_ticks > cactus.atacks[cactus.actual_atack]['time']:
                 cactus.atack_ticks = 0
                 cactus.is_atack = False
                 cactus.action = 'idle'
                 cactus.gravity = True
+                cactus.x_momentum = 0
 
-                if cactus.actual_atack == '1':
-                    cactus.actual_atack = choice(['2'])
-                else:
-                    cactus.actual_atack = choice(['1','2'])
-
-                
+                cactus.actual_atack = choice(['1','2'])
         
         #player
         player.draw(display, - scroll_x, - scroll_y)
@@ -579,6 +578,11 @@ def level2():
             player.action = 'run'
         else:
             player.action = 'idle'
+
+        if player.life <= 0:
+            status = 'lose'
+            text_menu = 'You Lose'
+            loop = False
 
         #tiles
         for tile in tiles:
@@ -614,6 +618,8 @@ def level2():
         window.blit(pygame.transform.scale(display, WINDOW_SIZE), (0 + offset[0], 0 + offset[1]))
         pygame.display.update()
         clock.tick(fps)
+
+    return status, text_menu
 
 def tutorial():
     pygame.mixer.music.set_volume(0.1)
@@ -725,15 +731,23 @@ def tutorial():
 def main():
 
     is_tutorial = False
+    is_level1   = False
+    is_level2   = False
     while True:
-        # if not is_tutorial:
-        #     tutorial()
-        #     is_tutorial = True
+        if not is_tutorial:
+            is_tutorial = True
+            tutorial()
 
-        # status = level1()
-        # menu(status)
+        while not is_level1:
+            status, text = level1()
+            menu(text)
+            if status == 'won':
+                is_level1 = True
 
-        status = level2()
-        menu(status)
+        while not is_level2:
+            status, text = level2()
+            menu(text)
+            if status == 'won':
+                is_level2 = True
 
 main()

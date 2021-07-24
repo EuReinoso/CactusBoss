@@ -1,6 +1,5 @@
 import pygame
 from math import sin, cos, radians
-from pygame.locals import *
 from os import walk
 from random import random, uniform, randint
 
@@ -11,26 +10,29 @@ pygame.mixer.init()
 #globals
 GRAVITY = 0.3
 AIR_FORCE = 0.05
-animation_img_data = {}
-animation_frame_data = {}
-fps = 60
+main_font = None
+FPS = 60
 clock = pygame.time.Clock()
 
-# Utility Stuff ---------------------------------------------------------------------------------#
-def draw_fps(surface, x, y, size, font, color= (0, 0, 0)):
-    draw_text_font(surface, str(int(clock.get_fps())), x, y, size, font, color)
 
-def draw_text_font(surface, text, x, y, size, font , color= (0, 0, 0)):
+# Utility Stuff ---------------------------------------------------------------------------------#
+def set_main_font(font_path):
+    global main_font
+    main_font = font_path
+
+def draw_text(surface, text, x, y, size, font = None, color= (0, 0, 0)):
+    if font == None:
+        font = main_font
     text_font = pygame.font.Font(font, size)
     render = text_font.render(text, False, color)
     surface.blit(render, (x, y))
 
 def load_img(path, colorkey= None, type = 'png'):
-    if colorkey != None:
+    if colorkey == None:
+        image = pygame.image.load(path + '.' + type).convert_alpha()
+    else:
         image = pygame.image.load(path + '.' + type).convert()
         image.set_colorkey(colorkey)
-    else:
-        image = pygame.image.load(path + '.' + type)
     return image
 
 def load_imgs_from_past(past_path, colorkey= None):
@@ -72,14 +74,19 @@ def shake_screen(ticks, intense):
     else:
         intense = 0
         offset = [0, 0]
-    return offset, ticks, intense
+    return offset, ticks
 
 def scroll_limit(scroll, limit):
     if scroll < limit[0]:
         scroll = limit[0]
     elif scroll > limit[1]:
         scroll = limit[1]
-    return scroll
+
+class Window:
+    def __int__(self, width, height):
+        self.width = width
+        self.height = height
+        pygame.display.set_mode((self.width, self.height))        
 
 
 class Obj:
@@ -217,8 +224,6 @@ class Rigidbody(Obj):
                 self.y = tile.rect.bottom + self.height/2  
                 self.y_momentum = 0  
 
-    
-
 class Platformer(Rigidbody):
     def __init__(self, x, y, width, height, img, jump_force= 5, xvel= 1.5, total_jumps= 2):
         super().__init__(x, y, width, height, img)
@@ -228,7 +233,6 @@ class Platformer(Rigidbody):
         self.total_jumps = total_jumps
         self.jump_force = jump_force
         self.jumps = 0
-        
 
     def control(self, event):
         if event.type == pygame.KEYDOWN:
@@ -284,10 +288,10 @@ class Platformer(Rigidbody):
                 self.y_momentum = 0  
 
     def jump(self):
-        self.y_momentum = - self.jump_force  
+        self.y_momentum = - self.jump_force
 
 class CircleParticle:
-    def __init__(self, x, y, radius, x_momentum= 0, y_momentum = 0, mass = 1, mutation= -0.5, air = True, gravity= True, vel = 0, type= None,  color= (255, 255, 255)):
+    def __init__(self, x, y, radius, x_momentum= 0, y_momentum = 0, mass = 1, mutation= -0.5, air = True, gravity= True, type= None,  color= (255, 255, 255)):
         self.x = x
         self.y = y
         self.radius = radius
@@ -298,7 +302,6 @@ class CircleParticle:
         self.gravity = gravity
         self.y_momentum = y_momentum
         self.x_momentum = x_momentum
-        self.vel = vel
 
         if type != None:
             if type == 'tinysmoke':
@@ -326,9 +329,8 @@ class CircleParticle:
                 self.mass = 0.1
                 self.radius = random() *  radius
                 self.air = False
-                self.vel = 3
-                self.x_momentum  =  cos(uniform(radians(0), radians(360))) * self.vel
-                self.y_momentum = sin(uniform(radians(0), radians(360))) * self.vel
+                self.x_momentum  =  cos(uniform(radians(0), radians(360))) 
+                self.y_momentum = sin(uniform(radians(0), radians(360)))
             if type == 'fire':
                 self.mutation = - 0.3
                 self.mass = 1
