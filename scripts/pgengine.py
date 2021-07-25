@@ -3,8 +3,6 @@ from math import sin, cos, radians
 from random import random, uniform, randint
 from typing import Type
 
-from pygame.constants import FULLSCREEN
-
 pygame.init()
 pygame.font.init()
 pygame.mixer.init()
@@ -67,6 +65,15 @@ def scroll_limit(scroll, limit):
         scroll = limit[0]
     elif scroll > limit[1]:
         scroll = limit[1]
+
+#OBJSMANAGER
+class ObjsManager:
+    def __init__(self):
+        self.objs = {}
+
+    def add_obj(self, name, obj):
+        self.objs[name] = obj
+
 
 #IMAGESMANAGER
 from os import walk
@@ -171,6 +178,9 @@ class Window:
     def height(self):
         return self._height
 
+#OBJ
+from copy import copy
+
 class Obj:
     def __init__(self, x, y, width, height, img):
         self.x = x
@@ -225,6 +235,9 @@ class Obj:
     def perfect_collide(self, obj) -> bool:
         return self.mask.overlap(obj.mask, (obj.rect.topleft[0] - self.rect.topleft[0], obj.rect.topleft[1] - self.rect.topleft[1]))
 
+    def get_copy(self):
+        return copy(self)
+
     @property
     def mask(self) -> pygame.mask.Mask:
         return pygame.mask.from_surface(self.img.convert_alpha())
@@ -269,6 +282,7 @@ class Obj:
     def height(self, value):
         self._height = value
         pygame.transform.scale(self.org_img, (self.width, value))
+
 
 class Rigidbody(Obj):
     def __init__(self, x, y, width, height, img, mass = 1, gravity= True):
