@@ -2,13 +2,12 @@ import pygame
 pygame.init()
 
 from scripts.pgengine import *
-from scripts.objs.player import Player
 
 class Level1:
     def __init__(self, game):
         self.game    = game
         self.display = game.window.display
-        self.objs    = game.objs_mng.objs.copy() 
+        self.objs    = game.objs_mng.objs.copy()
 
         #OBJS ------------------------------------------------------------
             #bg
@@ -19,11 +18,14 @@ class Level1:
         #MAP ------------------------------------------------------------
         self.map = load_map('assets/maps/map1.txt')
         self.tiles = self.load_tiles(self.map)
-        
-        for tile in self.tiles:
-            print(tile.x, tile.y)
-        print(len(self.tiles))
 
+        #CAMERA
+        self.camera = game.camera
+        self.camera.target = self.player
+        self.camera.zoom = 1
+        self.camera.delay_x = 15
+        self.camera.delay_y = 5
+        
         self.loop = True
     def events(self):
         for event in pygame.event.get():
@@ -33,17 +35,17 @@ class Level1:
             self.player.control(event)
 
     def draw(self):
-        self.display.fill((0, 0, 0))
-
-        self.bg.draw(self.display)
+        self.bg.draw(self.display, int(-self.camera.x * 0.5), int(-self.camera.y* 0.5))
 
         for tile in self.tiles:
-            tile.draw(self.display)
+            tile.draw(self.display, -self.camera.x, -self.camera.y)
 
-        self.player.draw(self.display)
+        self.player.draw(self.display, -self.camera.x, -self.camera.y)
     
     def update(self):
-        #SCROLL
+        #CAMERA
+        self.camera.update()
+        self.camera.limit([-8, 108], [0, 45])
 
         #PLAYER
         self.player.update()

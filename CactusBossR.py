@@ -1,8 +1,8 @@
-import pygame, sys, os
+import pygame, sys
 pygame.init()
 
 from scripts.scenes.level1 import Level1
-from scripts.pgengine import clock, Window, ImgsManager, ObjsManager, Obj
+from scripts.pgengine import clock, Window, ImgsManager, ObjsManager, Obj, Camera
 from scripts.objs.player import Player
 
 TILE_SIZE = 16
@@ -11,6 +11,7 @@ class Game:
     def __init__(self):
         self.window  = Window(900, 600)
         self.display = self.window.display
+        self.camera = Camera(self.window)
 
         #IMAGES
         imgs_path = 'assets/images/'
@@ -22,7 +23,7 @@ class Game:
 
         #OBJS
         self.objs_mng = ObjsManager()
-        self.objs_mng.add_obj('bg', Obj(self.display.get_width()/2, self.display.get_height()/2, int(self.display.get_width() * 1.1), int(self.display.get_height() * 1.1), self.imgs['background']))
+        self.objs_mng.add_obj('bg', Obj(self.display.get_width()/2, self.display.get_height()/2, int(self.display.get_width() * 2), int(self.display.get_height() * 2), self.imgs['background']))
         self.objs_mng.add_obj('tile1', Obj(0, 0, TILE_SIZE, TILE_SIZE, self.imgs['tile1']))
         self.objs_mng.add_obj('tile2', Obj(0, 0, TILE_SIZE, TILE_SIZE, self.imgs['tile2']))
         self.objs_mng.add_obj('player', Player(50, 50, 11, 15, self.animations['player_idle'][0]))
@@ -39,11 +40,14 @@ class Game:
 
     def update(self):
         while self.actual_scene.loop:
+            self.window.screen.fill((0, 0, 0))
+            self.display.fill((0, 0, 0))
+
             self.actual_scene.events()
             self.actual_scene.draw()
             self.actual_scene.update()
 
-            self.window.blit_display()
+            self.window.blit_display(zoom= self.camera.zoom)
             pygame.display.update()
             clock.tick(60)
         

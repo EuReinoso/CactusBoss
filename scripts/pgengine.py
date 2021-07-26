@@ -62,9 +62,47 @@ def shake_screen(ticks, intense):
 
 def scroll_limit(scroll, limit):
     if scroll < limit[0]:
-        scroll = limit[0]
-    elif scroll > limit[1]:
+        scroll = limit[0] 
+    elif scroll > limit[1]: 
         scroll = limit[1]
+
+#CAMERA
+
+class Camera:
+    def __init__(self, window):
+        self.window = window
+        self.display = window.display
+        self._target = None
+        self.x = 0
+        self.y = 0
+        self.angle = 0
+        self.zoom = 1
+        self.delay_x = 1
+        self.delay_y = 1
+
+    def update(self):
+        self.x += int((self.target.x  - self.x   - self.display.get_width() / 2) / self.delay_x)
+        self.y += int((self.target.y  - self.y   - self.display.get_height()/ 2) / self.delay_y)
+
+    def limit(self, limit_x, limit_y):
+        if self.x < limit_x[0]:
+            self.x = limit_x[0]
+        if self.x > limit_x[1]:
+            self.x = limit_x[1]
+
+        if self.y < limit_y[0]:
+            self.y = limit_y[0]
+        if self.y > limit_y[1]:
+            self.y = limit_y[1]
+
+
+    @property
+    def target(self):
+        return self._target
+    
+    @target.setter
+    def target(self, target):
+        self._target = target
 
 #OBJSMANAGER
 class ObjsManager:
@@ -148,21 +186,19 @@ class Window:
         self._height = height
         self.screen  = pygame.display.set_mode((width, height))
         self.display = pygame.Surface((int(width/3), int(height/3)))
-
-        self.fullscreen = False
+        self.org_display = copy(self.display)
 
     def resize(self, width, height):
         self._width = width
         self._height = height
         self.screen = pygame.display.set_mode((width, height))
     
-    def blit_display(self):
-        if self.fullscreen:
-            pos_x = int(FULLSCREEN_SIZE[0]/2 - self.width/2)
-            pos_y = int(FULLSCREEN_SIZE[1]/2 - self.height/2)
-            self.screen.blit(pygame.transform.scale(self.display, (self.width, self.height)), (pos_x, pos_y))
-        else:
-            self.screen.blit(pygame.transform.scale(self.display, (self.width, self.height)), (0, 0))
+    def blit_display(self, zoom= 1):
+        width  = int(self.width * zoom)
+        height = int(self.height * zoom)
+        pos_x = int(self.width/2 - width/2)
+        pos_y = int(self.height/2 - height/2)
+        self.screen.blit(pygame.transform.scale(self.display, (width, height)), (pos_x, pos_y))
 
     def get_size(self):
         return (self.width, self.height)
@@ -200,7 +236,9 @@ class Obj:
     def draw(self, surface, scroll_x= 0, scroll_y= 0, rot_angle =0):
         img = pygame.transform.flip(self.img, self.flipped_x, self.flipped_y)
         img = pygame.transform.rotate(img, rot_angle)
-        surface.blit(img, ( self.x - self.width/2 + scroll_x, self.y - self.height/2 + scroll_y))
+        pos_x = int(self.x - self.width / 2 + scroll_x)
+        pos_y = int(self.y - self.height / 2 + scroll_y)
+        surface.blit(img, (pos_x , pos_y))
 
     def draw_rect(self, surface, color= (255, 255, 255)):
         pygame.draw.rect(surface, color, self.rect)
