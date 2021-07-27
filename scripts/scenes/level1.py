@@ -1,56 +1,54 @@
-import pygame
+import pygame, sys
 pygame.init()
 
+from scripts.config import OBJS, clock, display, camera
 from scripts.pgengine import *
 
 class Level1:
-    def __init__(self, game):
-        self.game    = game
-        self.display = game.window.display
-        self.objs    = game.objs_mng.objs.copy()
-
+    def __init__(self):
         #OBJS ------------------------------------------------------------
-            #bg
-        self.bg = self.objs['bg']
-            #player
-        self.player = self.objs['player']
+        self.bg = OBJS['bg'].get_copy()
+        self.player = OBJS['player'].get_copy()
         
         #MAP ------------------------------------------------------------
         self.map = load_map('assets/maps/map1.txt')
         self.tiles = self.load_tiles(self.map)
 
         #CAMERA
-        self.camera = game.camera
-        self.camera.target = self.player
-        self.camera.zoom = 1
-        self.camera.delay_x = 15
-        self.camera.delay_y = 5
+        camera.target = self.player
         
         self.loop = True
     def events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.loop = False
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.type == pygame.K_SPACE:
+                    self.loop = False
 
             self.player.control(event)
 
     def draw(self):
-        self.bg.draw(self.display, int(-self.camera.x * 0.5), int(-self.camera.y* 0.5))
+        self.bg.draw(display, -int(camera.x * 0.5), -int(camera.y* 0.5))
 
         for tile in self.tiles:
-            tile.draw(self.display, -self.camera.x, -self.camera.y)
+            tile.draw(display, -camera.x, -camera.y)
 
-        self.player.draw(self.display, -self.camera.x, -self.camera.y)
+        self.player.draw(display, -camera.x, -camera.y)
     
     def update(self):
+        dt = clock.dt
+
         #CAMERA
-        self.camera.update()
-        self.camera.limit([-8, 108], [0, 45])
+        camera.update(dt)
+        camera.limit([-8, 108], [0, 45])
 
         #PLAYER
-        self.player.update()
-        self.player.collision_move(self.tiles)
-        self.player.anim()     
+        self.player.update(dt)
+        self.player.collision_move(self.tiles, dt)
+        self.player.anim(dt)     
 
     def load_tiles(self, map_data):
         tiles = []
@@ -60,11 +58,11 @@ class Level1:
             for tile in row:
                 is_tile = False
                 if tile == '1':
-                    new_tile = self.objs['tile1'].get_copy()
+                    new_tile = OBJS['tile1'].get_copy()
                     is_tile = True
                     
                 if tile == '2':
-                    new_tile = self.objs['tile2'].get_copy()
+                    new_tile = OBJS['tile2'].get_copy()
                     is_tile = True
 
                 if is_tile:

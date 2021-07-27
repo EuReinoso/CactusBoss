@@ -1,16 +1,15 @@
 import pygame
-from scripts.pgengine import Platformer, get_hit_list
+from scripts.pgengine import Platformer, get_hit_list, GRAVITY
 
 pygame.init()
 
 
 class Player(Platformer):
-    def __init__(self, game, x, y, width, height, img):
+    def __init__(self, x, y, width, height, img):
         super().__init__(x, y, width, height, img)
-        self.clock = game.clock
         self.xvel = 3
-        self.jump_force = 4
-        self.mass = 0.5
+        self.jump_force = 3
+        self.mass = 0.6
 
     def control(self, event):
         if event.type == pygame.KEYDOWN:
@@ -30,9 +29,9 @@ class Player(Platformer):
             if event.key == pygame.K_LEFT:
                 self.left = False
 
-    def collision_move(self, tiles):
+    def collision_move(self, tiles, dt):
         self.collide = {'top':False,'bottom':False,'right':False,'left':False}
-        self.x += self.x_momentum * self.clock.dt
+        self.x += self.x_momentum * dt
         hit_list = get_hit_list(self.rect, tiles)
         for tile in hit_list:
             if self.x_momentum > 0:
@@ -41,7 +40,7 @@ class Player(Platformer):
             elif self.x_momentum < 0:
                 self.collide['left'] = True
                 self.x = tile.rect.right + self.width/2
-        self.y += self.y_momentum * self.clock.dt
+        self.y += self.y_momentum * dt
         hit_list = get_hit_list(self.rect, tiles)
         for tile in hit_list:
             if self.y_momentum > 0:
@@ -54,5 +53,18 @@ class Player(Platformer):
                 self.y = tile.rect.bottom + self.height/2  
                 self.y_momentum = 0 
 
+    def jump(self):
+        self.y_momentum = - self.jump_force 
+
+    def update(self, dt):
+        if self.right:
+            self.x_momentum = int(self.xvel) 
+        elif self.left:
+            self.x_momentum = - int(self.xvel)
+        else:
+            self.x_momentum = 0
+        
+        if self.gravity:
+            self.y_momentum += GRAVITY * self.mass * dt
 
     

@@ -68,7 +68,7 @@ from time import time
 
 class Clock:
     def __init__(self):
-        self.fps = 120
+        self.fps = 144
         self.clock = pygame.time.Clock()
         self.last_time = time()
         self.dt = time() - self.last_time
@@ -101,9 +101,9 @@ class Camera:
         self.delay_x = 1
         self.delay_y = 1
 
-    def update(self):
-        self.x += int((self.target.x  - self.x   - self.display.get_width() / 2) / self.delay_x)
-        self.y += int((self.target.y  - self.y   - self.display.get_height()/ 2) / self.delay_y)
+    def update(self, dt):
+        self.x += int((self.target.x  - self.x   - self.display.get_width() / 2) / self.delay_x * dt)
+        self.y += int((self.target.y  - self.y   - self.display.get_height()/ 2) / self.delay_y * dt)
 
     def limit(self, limit_x, limit_y):
         if self.x < limit_x[0]:
@@ -282,14 +282,14 @@ class Obj:
         self.imgs_data[name] = imgs_sequence
         self.frames_data[name] = frames_list
 
-    def frame_update(self, frames):
-        self.frame += 1
+    def frame_update(self, frames, dt):
+        self.frame += 1 * dt
         if self.frame >= frames:
             self.frame = 0
 
-    def anim(self):
-        self.frame_update(len(self.frames_data[self.action]))
-        self.img = self.imgs_data[self.action][self.frames_data[self.action][self.frame]]
+    def anim(self, dt):
+        self.frame_update(len(self.frames_data[self.action]), dt)
+        self.img = self.imgs_data[self.action][self.frames_data[self.action][int(self.frame)]]
     
     def perfect_collide(self, obj) -> bool:
         return self.mask.overlap(obj.mask, (obj.rect.topleft[0] - self.rect.topleft[0], obj.rect.topleft[1] - self.rect.topleft[1]))
