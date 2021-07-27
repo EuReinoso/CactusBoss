@@ -11,9 +11,6 @@ pygame.mixer.init()
 GRAVITY = 0.3
 AIR_FORCE = 0.05
 main_font = None
-FPS = 60
-clock = pygame.time.Clock()
-
 
 # Utility Stuff ---------------------------------------------------------------------------------#
 def set_main_font(font_path):
@@ -65,6 +62,30 @@ def scroll_limit(scroll, limit):
         scroll = limit[0] 
     elif scroll > limit[1]: 
         scroll = limit[1]
+
+#CLOCK
+from time import time
+
+class Clock:
+    def __init__(self):
+        self.fps = 120
+        self.clock = pygame.time.Clock()
+        self.last_time = time()
+        self.dt = time() - self.last_time
+
+    def tick(self):
+        self.clock.tick(self.fps)
+
+    def dt_update(self):
+        self.dt = time() - self.last_time
+        self.dt *= 60
+        self.last_time = time()
+
+    def draw_fps(self, surface, x, y, size, font_path, color= (0, 0, 0)):
+        font = pygame.font.Font(font_path, size)
+        render = font.render(str(int(self.clock.get_fps())), False, color)
+        surface.blit(render, (x, y))
+
 
 #CAMERA
 
