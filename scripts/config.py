@@ -2,6 +2,7 @@ from scripts.pgengine import ImgsManager, ObjsManager, Obj, Window, Camera, Cloc
 from scripts.objs.player import Player
 from scripts.objs.cactus1 import Cactus1
 from scripts.objs.shot import Shot
+from scripts.objs.lifebar import LifeBar
 
 #WINDOW
 window  = Window(900, 600)
@@ -29,20 +30,42 @@ ANIMATIONS = imgs_mng.animations
 
 #OBJS
 objs_mng = ObjsManager()
-objs_mng.add_obj('bg', Obj(display.get_width()/2, display.get_height()/2, int(display.get_width() * 2), int(display.get_height() * 2), IMGS['background']))
-objs_mng.add_obj('tile1', Obj(0, 0, TILE_SIZE, TILE_SIZE, IMGS['tile1']))
-objs_mng.add_obj('tile2', Obj(0, 0, TILE_SIZE, TILE_SIZE, IMGS['tile2']))
-objs_mng.add_obj('player', Player(50, 50, 11, 15, ANIMATIONS['player_idle'][0]))
-objs_mng.add_obj('cactus1', Cactus1(1, 1, 80, 80, ANIMATIONS['cactus_idle'][0]))
-objs_mng.add_obj('thorn', Shot(0, 0, IMGS['thorn'].get_width(), IMGS['thorn'].get_height(), IMGS['thorn']))
+objs_mng.add_obj('bg', Obj(IMGS['background']))
+objs_mng.add_obj('tile1', Obj(IMGS['tile1']))
+objs_mng.add_obj('tile2', Obj(IMGS['tile2']))
+objs_mng.add_obj('player', Player(ANIMATIONS['player_idle'][0]))
+objs_mng.add_obj('cactus1', Cactus1(ANIMATIONS['cactus_idle'][0]))
+objs_mng.add_obj('thorn', Shot(IMGS['thorn']))
+objs_mng.add_obj('lifebar', LifeBar(IMGS['lifebar_b']))
+objs_mng.add_obj('liferect_r', Obj(IMGS['liferect_r']))
+objs_mng.add_obj('liferect_g', Obj(IMGS['liferect_g']))
+objs_mng.add_obj('player_life', Obj(IMGS['player_life']))
 
 #OBJS CONFIG
 OBJS = objs_mng.objs.copy()
+    #bg
+OBJS['bg'].y = display.get_height() / 2
+OBJS['bg'].x = display.get_width() / 2
+OBJS['bg'].height = int(display.get_height() * 2)
+OBJS['bg'].width = int(display.get_width() * 2)
     #player
 OBJS['player'].add_imgs_data(ANIMATIONS['player_idle'], 'idle', [15, 15])
 OBJS['player'].add_imgs_data(ANIMATIONS['player_run'], 'run', [10, 10])
 OBJS['player'].action = 'idle'
+OBJS['player'].total_jumps = 2
+OBJS['player'].jump_force = 3
+OBJS['player'].xvel = 3
+OBJS['player'].mass = 0.6
     #cactus1
 OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_idle'], 'idle', [10, 10, 10, 10])
 OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_atack'], 'atack', [10, 10, 10, 10])
 OBJS['cactus1'].action = 'idle'
+OBJS['cactus1'].width = 80
+OBJS['cactus1'].height = 80
+    #cactuslifebar
+OBJS['lifebar'].y = 6
+OBJS['lifebar'].x = display.get_width() / 2
+OBJS['lifebar'].height = 5
+OBJS['lifebar'].width  = 200
+OBJS['lifebar'].add_liferect(OBJS['liferect_r'])
+OBJS['lifebar'].add_liferect(OBJS['liferect_g'])

@@ -16,10 +16,15 @@ class Level1:
         self.cactus = OBJS['cactus1'].get_copy()
 
         #CONFIG
+            # player
+        self.player.x = 90
+        self.player.y = 50
+        self.player.build_hearts()
             #cactus
         cactus_tile = self.tiles[96]
         self.cactus.x = cactus_tile.x + 8
         self.cactus.y = cactus_tile.y - self.cactus.height/2 - cactus_tile.height/2
+        self.cactus.add_lifebar(OBJS['lifebar'].get_copy())
         self.cactus.init()
 
         #CAMERA
@@ -39,18 +44,25 @@ class Level1:
             self.player.control(event)
 
     def draw(self):
-        self.bg.draw(display, -int(camera.x * 0.5), -int(camera.y* 0.5))
+        self.bg.draw(display, -int(camera.x * 0.7) , -int(camera.y * 0.7))
 
         for tile in self.tiles:
             tile.draw(display, -camera.x, -camera.y)
 
         self.cactus.draw(display, -camera.x, -camera.y)
+        if not self.cactus.is_dead:
+            #ui
+            self.cactus.lifebar.draw_liferects(display)
+            self.cactus.lifebar.draw(display)
+
         for shot in self.cactus.shots:
             shot.draw(display, -camera.x, -camera.y)
-            
+        
+        #player
         self.player.draw(display, -camera.x, -camera.y)
+        for heart in self.player.hearts:
+            heart.draw(display)
 
-    
     def update(self):
         dt = clock.dt
 
@@ -66,6 +78,8 @@ class Level1:
         #CACTUS
         self.cactus.update(self.player, dt)
         self.cactus.anim(dt)
+
+        #UI
 
         #debug
 

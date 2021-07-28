@@ -4,9 +4,12 @@ from math import hypot, degrees, atan2
 from random import randint
 
 class Cactus1(Obj):
-    def __init__(self, x, y, width, height, img):
-        super().__init__(x, y, width, height, img)
-        self.life = 100
+    def __init__(self, img):
+        super().__init__(img)
+        self.lifes = {'1' : 100, '2': 100}
+        self.actual_life = '1'
+        self.life = self.lifes[self.actual_life]
+        self.is_dead = False
 
         self.shots = []
         self.atack_ticks = 0
@@ -38,7 +41,11 @@ class Cactus1(Obj):
         
         self.shots_update(player, dt)
         self.look_player(player.x)
-    
+        self.lifebar_update()
+        
+
+        
+
     def idle_update(self, player, dt):
         self.idle_ticks += 1 * dt
         if self.idle_ticks > self.idle_time:
@@ -48,9 +55,9 @@ class Cactus1(Obj):
             self.action = 'atack'
         else:
             if self.rect.colliderect(player.rect):
-                if player.x > self.x - 13 and player.x < self.x + 13:
+                if player.x > self.x - 14 and player.x < self.x + 14:
                     if player.rect.bottom > self.rect.top  + 16 and player.rect.top < self.rect.top + 16:
-                        self.life -= 5 
+                        self.life -= 2
                         player.jump()
 
     def atack_update(self, player, dt):
@@ -99,9 +106,24 @@ class Cactus1(Obj):
                 if shot.rect.colliderect(player.rect):
                     self.shots.pop(i)
                     player.life -= 1
+                    player.del_heart()
+
+    def add_lifebar(self, obj):
+        self.lifebar = obj
+
+    def get_life_percent(self):
+        return self.life / self.lifes[self.actual_life]
 
     def _get_idle_time(self):
         return randint(self.idle_time_range[0], self.idle_time_range[1])
 
+    def lifebar_update(self):
+        self.lifebar.update_liferect(self.get_life_percent())
+        if self.get_life_percent() <= 0 and self.actual_life == '1':
+            self.actual_life = '2'
+            self.life = self.lifes['2']
+            self.lifebar.del_liferect()
+        if self.get_life_percent() <= 0 and self.actual_life == '2':
+            self.is_dead = True
 
         

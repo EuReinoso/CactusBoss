@@ -1,16 +1,16 @@
 import pygame
+from pygame import display
 from scripts.pgengine import Platformer, get_hit_list, GRAVITY
+from scripts import config
 
 pygame.init()
 
 
 class Player(Platformer):
-    def __init__(self, x, y, width, height, img):
-        super().__init__(x, y, width, height, img)
-        self.xvel = 3
-        self.jump_force = 3
-        self.mass = 0.6
+    def __init__(self, img):
+        super().__init__(img)
         self.life = 10
+        self.hearts = []
 
     def control(self, event):
         if event.type == pygame.KEYDOWN:
@@ -70,6 +70,19 @@ class Player(Platformer):
         
         if self.gravity:
             self.y_momentum += GRAVITY * self.mass * dt
+
+    def build_hearts(self):
+        x = 10
+        y = 190
+        for _ in range(self.life):
+            heart = config.OBJS['player_life'].get_copy()
+            heart.x = x
+            heart.y = y
+            x += 6
+            self.hearts.append(heart)
+
+    def del_heart(self):
+        self.hearts.pop()
 
 
     

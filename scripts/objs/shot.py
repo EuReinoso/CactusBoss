@@ -1,8 +1,8 @@
 from scripts.pgengine import Obj
 
 class Shot(Obj):
-    def __init__(self, x, y, width, height, img):
-        super().__init__(x, y, width, height, img)
+    def __init__(self, img):
+        super().__init__(img)
         self.angle = 0
         self.vel = 1
         self.mov = [0, 0]

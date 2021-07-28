@@ -238,14 +238,13 @@ class Window:
 from copy import copy
 
 class Obj:
-    def __init__(self, x, y, width, height, img):
-        self.x = x
-        self.y = y
-        self._width = width
-        self._height = height
+    def __init__(self, img):
+        self._height = img.get_height()
+        self._width = img.get_width()
         self._img = img
         self.org_img = img
-        self.img = pygame.transform.scale(self.img, (width, height))
+        self.x = 0
+        self.y = 0
         self.imgs_data = {}
         self.frames_data = {}
         self.frame = 0
@@ -344,12 +343,12 @@ class Obj:
 
 
 class Rigidbody(Obj):
-    def __init__(self, x, y, width, height, img, mass = 1, gravity= True):
-        super().__init__(x, y, width, height, img)
+    def __init__(self, img, mass = 1, gravity= True):
+        super().__init__(img)
         self.mass = mass
+        self.gravity = gravity
         self.y_momentum = 0
         self.x_momentum = 0
-        self.gravity = gravity
         self.collide = {'top' : False, 'bottom' : False, 'right' : False, 'left' : False}
     
     def update(self):
@@ -380,13 +379,13 @@ class Rigidbody(Obj):
                 self.y_momentum = 0  
 
 class Platformer(Rigidbody):
-    def __init__(self, x, y, width, height, img, jump_force= 5, xvel= 1.5, total_jumps= 2):
-        super().__init__(x, y, width, height, img)
+    def __init__(self, img):
+        super().__init__(img)
         self.right = False
         self.left = False
-        self.xvel = xvel
-        self.total_jumps = total_jumps
-        self.jump_force = jump_force
+        self.xvel = 1
+        self.total_jumps = 1
+        self.jump_force = 5
         self.jumps = 0
 
     def control(self, event):
@@ -446,17 +445,17 @@ class Platformer(Rigidbody):
         self.y_momentum = - self.jump_force
 
 class CircleParticle:
-    def __init__(self, x, y, radius, x_momentum= 0, y_momentum = 0, mass = 1, mutation= -0.5, air = True, gravity= True, type= None,  color= (255, 255, 255)):
-        self.x = x
-        self.y = y
+    def __init__(self, radius, type= None, color= (255, 255, 255)):
+        self.x = 0
+        self.y = 0
         self.radius = radius
-        self.mutation = mutation
-        self.mass = mass
+        self.mutation = 0
+        self.mass = 1
         self.color = color
-        self.air= air
-        self.gravity = gravity
-        self.y_momentum = y_momentum
-        self.x_momentum = x_momentum
+        self.air= False
+        self.gravity = True
+        self.y_momentum = 0
+        self.x_momentum = 0
 
         if type != None:
             if type == 'tinysmoke':
