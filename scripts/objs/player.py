@@ -10,6 +10,7 @@ class Player(Platformer):
         self.xvel = 3
         self.jump_force = 3
         self.mass = 0.6
+        self.life = 10
 
     def control(self, event):
         if event.type == pygame.KEYDOWN:
@@ -59,12 +60,16 @@ class Player(Platformer):
     def update(self, dt):
         if self.right:
             self.x_momentum = int(self.xvel) 
+            self.action = 'run'
         elif self.left:
             self.x_momentum = - int(self.xvel)
+            self.action = 'run'
         else:
             self.x_momentum = 0
+            self.action = 'idle'
         
         if self.gravity:
             self.y_momentum += GRAVITY * self.mass * dt
+
 
     

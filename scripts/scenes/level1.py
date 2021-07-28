@@ -6,13 +6,21 @@ from scripts.pgengine import *
 
 class Level1:
     def __init__(self):
-        #OBJS ------------------------------------------------------------
-        self.bg = OBJS['bg'].get_copy()
-        self.player = OBJS['player'].get_copy()
-        
         #MAP ------------------------------------------------------------
         self.map = load_map('assets/maps/map1.txt')
         self.tiles = self.load_tiles(self.map)
+
+        #OBJS ------------------------------------------------------------
+        self.bg     = OBJS['bg'].get_copy()
+        self.player = OBJS['player'].get_copy()
+        self.cactus = OBJS['cactus1'].get_copy()
+
+        #CONFIG
+            #cactus
+        cactus_tile = self.tiles[96]
+        self.cactus.x = cactus_tile.x + 8
+        self.cactus.y = cactus_tile.y - self.cactus.height/2 - cactus_tile.height/2
+        self.cactus.init()
 
         #CAMERA
         camera.target = self.player
@@ -36,19 +44,30 @@ class Level1:
         for tile in self.tiles:
             tile.draw(display, -camera.x, -camera.y)
 
+        self.cactus.draw(display, -camera.x, -camera.y)
+        for shot in self.cactus.shots:
+            shot.draw(display, -camera.x, -camera.y)
+            
         self.player.draw(display, -camera.x, -camera.y)
+
     
     def update(self):
         dt = clock.dt
 
         #CAMERA
         camera.update(dt)
-        camera.limit([-8, 108], [0, 45])
+        camera.limit([-8, 108], [25, 45])
 
         #PLAYER
         self.player.update(dt)
         self.player.collision_move(self.tiles, dt)
         self.player.anim(dt)     
+
+        #CACTUS
+        self.cactus.update(self.player, dt)
+        self.cactus.anim(dt)
+
+        #debug
 
     def load_tiles(self, map_data):
         tiles = []

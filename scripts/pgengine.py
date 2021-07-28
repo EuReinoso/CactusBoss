@@ -86,7 +86,6 @@ class Clock:
         render = font.render(str(int(self.clock.get_fps())), False, color)
         surface.blit(render, (x, y))
 
-
 #CAMERA
 
 class Camera:
@@ -253,16 +252,17 @@ class Obj:
         self._action = None
         self.flipped_x = False
         self.flipped_y = False
+        self.rot_angle = 0
 
-    def draw(self, surface, scroll_x= 0, scroll_y= 0, rot_angle =0):
+    def draw(self, surface, scroll_x= 0, scroll_y= 0):
         img = pygame.transform.flip(self.img, self.flipped_x, self.flipped_y)
-        img = pygame.transform.rotate(img, rot_angle)
+        img = pygame.transform.rotate(img, self.rot_angle)
         pos_x = int(self.x - self.width / 2 + scroll_x)
         pos_y = int(self.y - self.height / 2 + scroll_y)
         surface.blit(img, (pos_x , pos_y))
 
-    def draw_rect(self, surface, color= (255, 255, 255)):
-        pygame.draw.rect(surface, color, self.rect)
+    def draw_rect(self, surface, scroll_x= 0, scroll_y = 0, color= (255, 255, 255)):
+        pygame.draw.rect(surface, color, (self.rect.x + scroll_x, self.rect.y + scroll_y, self.rect.width, self.rect.height))
     
     def set_colorkey(self, colorkey= (255, 255, 255)):
         self.img.set_colorkey(colorkey)
