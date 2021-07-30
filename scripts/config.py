@@ -1,4 +1,4 @@
-from scripts.pgengine import ImgsManager, ObjsManager, Obj, Window, Camera, Clock
+from scripts.pgengine import ImgsManager, ObjsManager, Obj, Window, Camera, Clock, ParticleManager
 from scripts.objs.player import Player
 from scripts.objs.cactus1 import Cactus1
 from scripts.objs.shot import Shot
@@ -51,6 +51,7 @@ OBJS['bg'].width = int(display.get_width() * 2)
     #player
 OBJS['player'].add_imgs_data(ANIMATIONS['player_idle'], 'idle', [15, 15])
 OBJS['player'].add_imgs_data(ANIMATIONS['player_run'], 'run', [10, 10])
+OBJS['player'].add_imgs_data(ANIMATIONS['player_damage'], 'damage', [2, 10])
 OBJS['player'].action = 'idle'
 OBJS['player'].total_jumps = 2
 OBJS['player'].jump_force = 3
@@ -59,6 +60,7 @@ OBJS['player'].mass = 0.6
     #cactus1
 OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_idle'], 'idle', [10, 10, 10, 10])
 OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_atack'], 'atack', [10, 10, 10, 10])
+OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_damage'], 'damage', [3, 3, 3, 3])
 OBJS['cactus1'].action = 'idle'
 OBJS['cactus1'].width = 80
 OBJS['cactus1'].height = 80
@@ -69,3 +71,6 @@ OBJS['lifebar'].height = 5
 OBJS['lifebar'].width  = 200
 OBJS['lifebar'].add_liferect(OBJS['liferect_r'])
 OBJS['lifebar'].add_liferect(OBJS['liferect_g'])
+
+#PARTICLES
+particles_mng = ParticleManager()

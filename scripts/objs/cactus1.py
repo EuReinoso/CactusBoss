@@ -1,7 +1,7 @@
 from scripts import config
-from scripts.pgengine import Obj
+from scripts.pgengine import Obj, CircleParticle
 from math import hypot, degrees, atan2
-from random import randint
+from random import randint, uniform
 
 class Cactus1(Obj):
     def __init__(self, img):
@@ -23,6 +23,8 @@ class Cactus1(Obj):
         self.idle_ticks = 0
         self.shot_ticks = 0
 
+        self.damage_ticks = 0
+
     def init(self):
         #FUTURE POLISH - make shots coming out of mouth
         self.mouth_pos = (self.x , self.y )
@@ -42,9 +44,9 @@ class Cactus1(Obj):
         self.shots_update(player, dt)
         self.look_player(player.x)
         self.lifebar_update()
-        
 
-        
+        if self.damage_ticks > 0:
+            self.damage_update(dt)
 
     def idle_update(self, player, dt):
         self.idle_ticks += 1 * dt
@@ -56,9 +58,16 @@ class Cactus1(Obj):
         else:
             if self.rect.colliderect(player.rect):
                 if player.x > self.x - 14 and player.x < self.x + 14:
-                    if player.rect.bottom > self.rect.top  + 16 and player.rect.top < self.rect.top + 16:
-                        self.life -= 2
+                    if player.rect.bottom > self.rect.top  + 17 and player.rect.top < self.rect.top + 17:
+                        p1 = CircleParticle(10, typ= '360', x= player.x, y= player.y + 10, mass= 0.5, mutation= -0.4,vel= 3, color= (148, 138, 131))
+                        p2 = CircleParticle(8, typ= '360', x= player.x, y= player.y + 10, mass= 1, mutation= -0.5,vel= 5, color= (148, 180, 131))
+                        config.particles_mng.add_particles(p1, 10)
+                        config.particles_mng.add_particles(p2, 20)
                         player.jump()
+                        player.jumps = 1
+
+                        self.damage()
+                        
 
     def atack_update(self, player, dt):
         self.atack_ticks += 1 * dt
@@ -103,10 +112,12 @@ class Cactus1(Obj):
                 self.shots.pop(i)
             else:
                 #collide player
-                if shot.rect.colliderect(player.rect):
-                    self.shots.pop(i)
-                    player.life -= 1
-                    player.del_heart()
+                if player.imuniti_ticks <= 0:
+                    if shot.rect.colliderect(player.rect):
+                        self.shots.pop(i)
+                        p1 = CircleParticle(5, typ= '360', x= player.x, y= player.y, mass= 0.6, mutation= -0.3,vel= 2, color= (170, 100, 100))
+                        config.particles_mng.add_particles(p1, 10)
+                        player.damage()
 
     def add_lifebar(self, obj):
         self.lifebar = obj
@@ -125,5 +136,15 @@ class Cactus1(Obj):
             self.lifebar.del_liferect()
         if self.get_life_percent() <= 0 and self.actual_life == '2':
             self.is_dead = True
+
+    def damage_update(self, dt):
+        self.damage_ticks -= 1 * dt
+        if int(self.damage_ticks) == 0:
+            self.action = 'idle'
+
+    def damage(self):
+        self.life -= 2
+        self.action = 'damage'
+        self.damage_ticks = 10
 
         

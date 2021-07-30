@@ -1,7 +1,7 @@
 import pygame, sys
 pygame.init()
 
-from scripts.config import OBJS, clock, display, camera
+from scripts.config import OBJS, clock, display, camera, particles_mng
 from scripts.pgengine import *
 
 class Level1:
@@ -55,13 +55,17 @@ class Level1:
             self.cactus.lifebar.draw_liferects(display)
             self.cactus.lifebar.draw(display)
 
-        for shot in self.cactus.shots:
-            shot.draw(display, -camera.x, -camera.y)
-        
         #player
         self.player.draw(display, -camera.x, -camera.y)
         for heart in self.player.hearts:
             heart.draw(display)
+        
+        #shots
+        for shot in self.cactus.shots:
+            shot.draw(display, -camera.x, -camera.y)
+
+        #particles
+        particles_mng.draw_particles(display, -camera.x, -camera.y)
 
     def update(self):
         dt = clock.dt
@@ -79,8 +83,8 @@ class Level1:
         self.cactus.update(self.player, dt)
         self.cactus.anim(dt)
 
-        #UI
-
+        #PARTICLES
+        particles_mng.update(dt)
         #debug
 
     def load_tiles(self, map_data):

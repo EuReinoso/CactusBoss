@@ -9,8 +9,10 @@ pygame.init()
 class Player(Platformer):
     def __init__(self, img):
         super().__init__(img)
-        self.life = 10
+        self.life = 5
         self.hearts = []
+        self.dead = False
+        self.imuniti_ticks = 0
 
     def control(self, event):
         if event.type == pygame.KEYDOWN:
@@ -58,18 +60,26 @@ class Player(Platformer):
         self.y_momentum = - self.jump_force 
 
     def update(self, dt):
-        if self.right:
-            self.x_momentum = int(self.xvel) 
-            self.action = 'run'
-        elif self.left:
-            self.x_momentum = - int(self.xvel)
-            self.action = 'run'
-        else:
-            self.x_momentum = 0
-            self.action = 'idle'
+        self.move()
+
+        if self.imuniti_ticks <= 0:
+            if self.right or self.left:
+                self.action = 'run'
+            else:
+                self.action = 'idle'
+            
+        self.imuniti_update(dt)
         
         if self.gravity:
             self.y_momentum += GRAVITY * self.mass * dt
+
+    def move(self):
+        if self.right:
+            self.x_momentum = int(self.xvel) 
+        elif self.left:
+            self.x_momentum = - int(self.xvel)
+        else:
+            self.x_momentum = 0
 
     def build_hearts(self):
         x = 10
@@ -83,6 +93,23 @@ class Player(Platformer):
 
     def del_heart(self):
         self.hearts.pop()
+    
+
+    def damage(self):
+        self.life -= 1
+        self.action = 'damage'
+        self.imuniti_ticks = 15
+        if self.life == 0:
+            self.dead = True
+        if self.life >= 0:
+            self.imuniti_ticks = 60
+            self.del_heart()
+
+    def imuniti_update(self, dt):
+        if self.imuniti_ticks > 0:
+            self.imuniti_ticks -= 1 * dt
+            if int(self.imuniti_ticks) == 0:
+                self.action = 'idle'
 
 
     

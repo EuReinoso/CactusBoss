@@ -63,6 +63,100 @@ def scroll_limit(scroll, limit):
     elif scroll > limit[1]: 
         scroll = limit[1]
 
+#PARTICLEMANAGER
+
+class ParticleManager:
+    def __init__(self):
+        self.particles = []
+        self.particle_types = {}
+
+    def update(self, dt):
+        for i, p in sorted(enumerate(self.particles), reverse= True):
+            p.update(dt)
+
+            if p.dead:
+                self.particles.pop(i)
+
+    def draw_particles(self, surface, scroll_x, scroll_y):
+        for p in self.particles:
+            p.draw(surface, scroll_x, scroll_y)
+
+    def add_particles(self, particle, quant, **kwargs):
+        for k, v in kwargs.items():
+            if k in particle.__dict__:
+                setattr(particle, k, v)
+            else:
+                raise KeyError(k)
+
+        for _ in range(quant):
+            particle.typ = particle.typ
+            self.particles.append(particle.get_copy())
+
+    def add_particle_type(self, name, radius, **kwargs):
+        particle = CircleParticle(radius, **kwargs)
+        self.particle_types[name] = particle
+
+class CircleParticle:
+    def __init__(self, radius, typ= None, color= (255, 255, 255), **kwargs):
+        self.medium_size = uniform(0.5, 1)
+        self.medium_vel = uniform(0.5, 1)
+        self.radius = radius * self.medium_size
+        self._typ = typ
+        self.vel = 1 * self.medium_vel
+        self.color = color
+        self.x = 0
+        self.y = 0
+        self.mutation = 0
+        self.mass = 1
+        self.y_momentum = 0
+        self.x_momentum = 0
+        self.dead = False
+        self.min_size = 0
+        self.max_size = 1000
+
+        self.typ = typ
+
+        for k, v in kwargs.items():
+            if k in self.__dict__:
+                setattr(self, k, v)
+            else:
+                raise KeyError(k)
+    @property
+    def typ(self):
+        return self._typ
+        
+    @typ.setter
+    def typ(self, typ):
+        if typ == '360':
+            self.x_momentum  =  cos(uniform(radians(0), radians(360))) * self.vel
+            self.y_momentum  = sin(uniform(radians(0), radians(360))) * self.vel
+        if typ == 'sides':
+            if random() > 0.5:
+                self.x_momentum  =  cos(uniform(radians(0), radians(-30))) * self.vel
+                self.y_momentum  = sin(uniform(radians(0), radians(-30))) * self.vel
+            else:
+                self.x_momentum  =  cos(uniform(radians(180), radians(210))) * self.vel
+                self.y_momentum  = sin(uniform(radians(180), radians(210))) * self.vel
+
+
+    def draw(self, surface, scroll_x, scroll_y, flags=0):
+        temp_surf = pygame.Surface((int(self.radius * 2), int(self.radius * 2)))
+        temp_surf.set_colorkey((0, 0, 0))
+        pygame.draw.circle(temp_surf, self.color, (self.radius, self.radius), self.radius)
+        surface.blit(temp_surf, (self.x - self.radius + scroll_x, self.y - self.radius + scroll_y), special_flags= flags)
+
+    def update(self, dt):
+        self.y += self.y_momentum * dt
+        self.x += self.x_momentum * dt
+        self.radius += self.mutation * dt
+        self.y_momentum += GRAVITY * self.mass * dt
+
+        if self.radius <= self.min_size or self.radius >= self.max_size:
+            self.dead = True
+    
+    def get_copy(self):
+        return copy(self)
+
 #CLOCK
 from time import time
 
@@ -134,7 +228,7 @@ class ObjsManager:
 
 
 #IMAGESMANAGER
-from os import walk
+from os import execl, walk
 
 def load_img(path, a_type = 'png', colorkey= None):
     if colorkey == None:
@@ -242,6 +336,7 @@ class Obj:
         self._height = img.get_height()
         self._width = img.get_width()
         self._img = img
+        self.img = img
         self.org_img = img
         self.x = 0
         self.y = 0
@@ -444,87 +539,7 @@ class Platformer(Rigidbody):
     def jump(self):
         self.y_momentum = - self.jump_force
 
-class CircleParticle:
-    def __init__(self, radius, type= None, color= (255, 255, 255)):
-        self.x = 0
-        self.y = 0
-        self.radius = radius
-        self.mutation = 0
-        self.mass = 1
-        self.color = color
-        self.air= False
-        self.gravity = True
-        self.y_momentum = 0
-        self.x_momentum = 0
 
-        if type != None:
-            if type == 'tinysmoke':
-                self.mutation = 0.2
-                self.mass = 0
-                self.air = False
-                self.gravity = False
-                self.radius =  random() * radius
-                self.x_momentum = cos(uniform(radians(-80), radians(-100)))
-                self.y_momentum = sin(uniform(radians(-80), radians(-100)))
-            if type == 'bigsmoke':
-                self.mutation = 0.2
-                self.mass = 0.0001
-                self.radius =  random() * radius
-                self.x_momentum = cos(uniform(radians(0), radians(180)))
-            if type == 'explosion':
-                self.mutation = 0.3
-                self.mass = 0.1
-                self.radius = random() *  radius
-                self.air = False
-                self.x_momentum  =  cos(uniform(radians(0), radians(360))) 
-                self.y_momentum = sin(uniform(radians(0), radians(360)))
-            if type == 'dexplosion':
-                self.mutation = -0.3
-                self.mass = 0.1
-                self.radius = random() *  radius
-                self.air = False
-                self.x_momentum  =  cos(uniform(radians(0), radians(360))) 
-                self.y_momentum = sin(uniform(radians(0), radians(360)))
-            if type == 'fire':
-                self.mutation = - 0.3
-                self.mass = 1
-                self.gravity = False
-                self.radius = random() * radius
-                self.x_momentum = cos(uniform(radians(-80), radians(-100))) * 10
-                self.y_momentum = sin(uniform(radians(-80), radians(-100))) * 5
-            if type == 'tinyup':
-                self.mutation = - 0.2
-                self.mass = 1
-                self.radius = random() * radius
-                self.x_momentum = cos(uniform(radians(-80), radians(-100))) * 10
-                self.y_momentum = sin(uniform(radians(-80), radians(-100))) * 5
-            if type == 'bigup':
-                self.mutation = - 0.2
-                self.mass = 1
-                self.radius = random() * radius
-                self.x_momentum = cos(uniform(radians(-60), radians(-120))) * 5
-                self.y_momentum = sin(uniform(radians(-60), radians(-120))) * 5
-
-
-    def draw(self, surface, scroll_x, scroll_y, flags=0):
-        temp_surf = pygame.Surface((self.radius * 2, self.radius * 2))
-        temp_surf.set_colorkey((0, 0, 0))
-        pygame.draw.circle(temp_surf, self.color, (self.radius, self.radius), self.radius)
-        surface.blit(temp_surf, (self.x - self.radius + scroll_x, self.y - self.radius + scroll_y), special_flags= flags)
-
-    def update(self):
-        self.y += self.y_momentum
-        self.x += self.x_momentum
-        self.radius += self.mutation
-        
-        if self.gravity:
-            self.y_momentum += (GRAVITY * self.mass) - AIR_FORCE      
-
-        if self.air and self.x_momentum != 0:
-            if self.x_momentum > 0:
-                self.x_momentum -= AIR_FORCE 
-            if self.x_momentum < 0:
-                self.x_momentum += AIR_FORCE
         
 
 
