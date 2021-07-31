@@ -6,6 +6,7 @@ class Shot(Obj):
         self.angle = 0
         self.vel = 1
         self.mov = [0, 0]
+        self.outline = True
     
     def update(self, dt):
         self.x += self.mov[0] * self.vel * dt

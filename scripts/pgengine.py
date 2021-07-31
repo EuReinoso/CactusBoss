@@ -2,6 +2,8 @@ import pygame
 from math import sin, cos, radians, ceil, floor
 from random import random, uniform, randint
 
+from pygame import mask
+
 pygame.init()
 pygame.font.init()
 pygame.mixer.init()
@@ -372,6 +374,8 @@ class Obj:
         self.flipped_x = False
         self.flipped_y = False
         self.rot_angle = 0
+        self.outline = False
+        self.outline_color = (255, 255, 255)
 
         for k, v in kwargs.items():
             if k in self.__dict__:
@@ -384,11 +388,25 @@ class Obj:
         img = pygame.transform.rotate(img, self.rot_angle)
         pos_x = int(self.x - self.width / 2 + scroll_x)
         pos_y = int(self.y - self.height / 2 + scroll_y)
+
+        if self.outline:
+            self.draw_outline(surface, pos_x, pos_y)
+            
         surface.blit(img, (pos_x , pos_y))
+
+    def draw_outline(self, surface, pos_x, pos_y):
+        mask_surf = self.mask.to_surface(setcolor= self.outline_color)
+        mask_surf = pygame.transform.flip(mask_surf, self.flipped_x, self.flipped_y)
+        mask_surf = pygame.transform.rotate(mask_surf, self.rot_angle)
+        mask_surf.set_colorkey((0, 0, 0))
+        surface.blit(mask_surf, (pos_x + 1, pos_y))
+        surface.blit(mask_surf, (pos_x - 1, pos_y))
+        surface.blit(mask_surf, (pos_x, pos_y + 1))
+        surface.blit(mask_surf, (pos_x, pos_y - 1))
 
     def draw_rect(self, surface, scroll_x= 0, scroll_y = 0, color= (255, 255, 255)):
         pygame.draw.rect(surface, color, (self.rect.x + scroll_x, self.rect.y + scroll_y, self.rect.width, self.rect.height))
-    
+
     def set_colorkey(self, colorkey= (255, 255, 255)):
         self.img.set_colorkey(colorkey)
         self.org_img.set_colorkey(colorkey)
