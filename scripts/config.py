@@ -5,13 +5,13 @@ from scripts.objs.shot import Shot
 from scripts.objs.lifebar import LifeBar
 
 #WINDOW
-window  = Window(900, 600)
+window  = Window(900, 600, 'CactusBoss')
 display = window.display
 
 #CAMERA
 camera = Camera(window)
-camera.delay_x = 15
-camera.delay_y = 5
+camera.delay_x = 20
+camera.delay_y = 50
 
 #CLOCK
 clock = Clock()
@@ -46,8 +46,8 @@ OBJS = objs_mng.objs.copy()
     #bg
 OBJS['bg'].y = display.get_height() / 2
 OBJS['bg'].x = display.get_width() / 2
-OBJS['bg'].height = int(display.get_height() * 2)
-OBJS['bg'].width = int(display.get_width() * 2)
+OBJS['bg'].height = int(display.get_height() * 1.5)
+OBJS['bg'].width = int(display.get_width() * 1.5)
     #player
 OBJS['player'].add_imgs_data(ANIMATIONS['player_idle'], 'idle', [15, 15])
 OBJS['player'].add_imgs_data(ANIMATIONS['player_run'], 'run', [10, 10])

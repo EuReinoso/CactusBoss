@@ -71,8 +71,8 @@ class Level1:
         dt = clock.dt
 
         #CAMERA
+        camera.limit([3, 97], [25, 35])
         camera.update(dt)
-        camera.limit([-8, 108], [25, 45])
 
         #PLAYER
         self.player.update(dt)

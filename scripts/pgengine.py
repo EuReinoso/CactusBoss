@@ -1,7 +1,6 @@
 import pygame
-from math import sin, cos, radians
+from math import sin, cos, radians, ceil, floor
 from random import random, uniform, randint
-from typing import Type
 
 pygame.init()
 pygame.font.init()
@@ -187,28 +186,49 @@ class Camera:
         self.window = window
         self.display = window.display
         self._target = None
+        self.true_x = 0
+        self.true_y = 0
         self.x = 0
         self.y = 0
         self.angle = 0
         self.zoom = 1
         self.delay_x = 1
         self.delay_y = 1
+        self.shake_ticks = 0
+        self.shake_x = [0, 0]
+        self.shake_y = [0, 0]
+        
 
     def update(self, dt):
-        self.x += int((self.target.x  - self.x   - self.display.get_width() / 2) / self.delay_x * dt)
-        self.y += int((self.target.y  - self.y   - self.display.get_height()/ 2) / self.delay_y * dt)
+
+        self.true_x += (self.target.x  - self.true_x  - self.display.get_width() / 2) / self.delay_x
+        self.true_y += (self.target.y  - self.true_y  - self.display.get_height()/ 2) / self.delay_y
+        self.x = int(copy(self.true_x))
+        self.y = int(copy(self.true_y))
+
+        self.shake_update(dt)
 
     def limit(self, limit_x, limit_y):
-        if self.x < limit_x[0]:
-            self.x = limit_x[0]
-        if self.x > limit_x[1]:
-            self.x = limit_x[1]
+        if self.true_x < limit_x[0]:
+           self.true_x = limit_x[0]
+        if self.true_x > limit_x[1]:
+           self.true_x = limit_x[1]
+        
+        if self.true_y < limit_y[0]:
+           self.true_y = limit_y[0]
+        if self.true_y > limit_y[1]:
+           self.true_y = limit_y[1]
 
-        if self.y < limit_y[0]:
-            self.y = limit_y[0]
-        if self.y > limit_y[1]:
-            self.y = limit_y[1]
+    def shake(self, x_range, y_range, time):
+        self.shake_ticks = time
+        self.shake_x = x_range
+        self.shake_y = y_range
 
+    def shake_update(self, dt):
+        if int(self.shake_ticks) > 0:
+            self.shake_ticks -= 1 * dt
+            self.x += randint(self.shake_x[0], self.shake_x[1])
+            self.y += randint(self.shake_y[0], self.shake_y[1])
 
     @property
     def target(self):
@@ -228,7 +248,7 @@ class ObjsManager:
 
 
 #IMAGESMANAGER
-from os import execl, walk
+from os import walk
 
 def load_img(path, a_type = 'png', colorkey= None):
     if colorkey == None:
@@ -295,12 +315,15 @@ class ImgsManager:
 FULLSCREEN_SIZE = (pygame.display.Info().current_w, pygame.display.Info().current_h)
 
 class Window:
-    def __init__(self, width, height):
+    def __init__(self, width, height, title = 'Game'):
         self._width  = width
         self._height = height
+        self.title = title
         self.screen  = pygame.display.set_mode((width, height))
         self.display = pygame.Surface((int(width/3), int(height/3)))
         self.org_display = copy(self.display)
+
+        pygame.display.set_caption(self.title)
 
     def resize(self, width, height):
         self._width = width
@@ -332,7 +355,7 @@ class Window:
 from copy import copy
 
 class Obj:
-    def __init__(self, img):
+    def __init__(self, img, **kwargs):
         self._height = img.get_height()
         self._width = img.get_width()
         self._img = img
@@ -340,6 +363,8 @@ class Obj:
         self.org_img = img
         self.x = 0
         self.y = 0
+        self.true_x = 0
+        self.true_y = 0
         self.imgs_data = {}
         self.frames_data = {}
         self.frame = 0
@@ -347,6 +372,12 @@ class Obj:
         self.flipped_x = False
         self.flipped_y = False
         self.rot_angle = 0
+
+        for k, v in kwargs.items():
+            if k in self.__dict__:
+                setattr(self, k, v)
+            else:
+                raise KeyError(k)
 
     def draw(self, surface, scroll_x= 0, scroll_y= 0):
         img = pygame.transform.flip(self.img, self.flipped_x, self.flipped_y)

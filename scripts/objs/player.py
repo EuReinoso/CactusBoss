@@ -1,7 +1,7 @@
 import pygame
-from pygame import display
-from scripts.pgengine import Platformer, get_hit_list, GRAVITY
+from scripts.pgengine import Platformer, get_hit_list, GRAVITY, CircleParticle
 from scripts import config
+from random import uniform
 
 pygame.init()
 
@@ -61,6 +61,8 @@ class Player(Platformer):
 
     def update(self, dt):
         self.move()
+        self.y_momentum += GRAVITY * self.mass * dt
+
 
         if self.imuniti_ticks <= 0:
             if self.right or self.left:
@@ -70,8 +72,7 @@ class Player(Platformer):
             
         self.imuniti_update(dt)
         
-        if self.gravity:
-            self.y_momentum += GRAVITY * self.mass * dt
+        self.hearts_update(dt)
 
     def move(self):
         if self.right:
@@ -88,22 +89,40 @@ class Player(Platformer):
             heart = config.OBJS['player_life'].get_copy()
             heart.x = x
             heart.y = y
+            heart.true_x = x
+            heart.true_y = y
             x += 6
             self.hearts.append(heart)
 
     def del_heart(self):
         self.hearts.pop()
-    
+
+    def hearts_update(self, dt):
+        if len(self.hearts) > 0:
+            self.hearts[-1].x = self.hearts[-1].true_x
+            self.hearts[-1].y = self.hearts[-1].true_y
+            self.hearts[-1].x += uniform(-1, 1) * dt
+            self.hearts[-1].y += uniform(-3, -2) * dt
 
     def damage(self):
         self.life -= 1
-        self.action = 'damage'
         self.imuniti_ticks = 15
+        self.action = 'damage'
         if self.life == 0:
             self.dead = True
         if self.life >= 0:
             self.imuniti_ticks = 60
             self.del_heart()
+
+        #vfx
+        config.camera.shake([-2, 2], [-2, 2], 10)
+        p1 = CircleParticle(5, typ= '360', x= self.x, y= self.y, mass= 0.6, mutation= -0.1,vel= 1, color= (200, 100, 100))
+        p2 = CircleParticle(6, typ= '360', x= self.x, y= self.y, mass= 1, mutation= -0.2,vel= 3, color= (100, 50, 50))
+        p3 = CircleParticle(4, typ= '360', x= self.x, y= self.y, mass= 0.2, mutation= -0.1,vel= 7, color= (100, 100, 100))
+        config.particles_mng.add_particles(p1, 10)
+        config.particles_mng.add_particles(p2, 20)
+        config.particles_mng.add_particles(p3, 5)
+        
 
     def imuniti_update(self, dt):
         if self.imuniti_ticks > 0:
