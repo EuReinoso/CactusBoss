@@ -1,7 +1,7 @@
 from scripts import config
 from scripts.pgengine import Obj, CircleParticle
-from math import hypot, degrees, atan2, radians, cos, sin
-from random import randint, uniform, choice
+from math import hypot, degrees, atan2, radians, cos, sin, pi
+from random import randint, choice, random
 
 class Cactus1(Obj):
     def __init__(self, img):
@@ -13,12 +13,12 @@ class Cactus1(Obj):
 
         self.shots = []
         self.atack_ticks = 0
-        self.atack_time = {'1' : 350, '2' : 200, '3' : 300, 'a1' : 350}
+        self.atack_time = {'1' : 350, '2' : 200, '3' : 300, 'a1' : 350, 'a2' : 400, 'a3' : 430, 'a4' : 400}
         self.atacks_list = ['1', '2', '3']
-        self.a_atacks_list = ['a1']
-        self.actual_atack = '3'
+        self.a_atacks_list = ['a1', 'a2', 'a3', 'a4']
+        self.actual_atack = '1'
         self.is_atack = False
-        self.is_angry = False
+        self.is_angry = True
 
         self.idle_time_range = [200, 350]
         self.idle_time = 120
@@ -28,6 +28,9 @@ class Cactus1(Obj):
         self.damage_ticks = 0
 
         self.angle_shot = 0
+        self.rot_increase = 0.05
+        self.shot_count = 0
+        self.surprise_atack_ticks = 0
 
     def init(self):
         #FUTURE POLISH - make shots coming out of mouth
@@ -52,6 +55,12 @@ class Cactus1(Obj):
         self.look_player(player.x)
         self.lifebar_update()
 
+        if self.is_angry:
+            self.surprise_atack_ticks += 1
+            if self.surprise_atack_ticks > 350:
+                self.surprise_atack_ticks = 0
+                self.atacka4(player.x, player.y)
+
     def idle_update(self, player, dt):
         #outlineupdate
         if sin(self.idle_ticks/10) > 0:
@@ -64,16 +73,27 @@ class Cactus1(Obj):
             self.idle_ticks = 0
             self.idle_time = self._get_idle_time()
             self.is_atack = True
-            self.action = 'atack'
+
             if not self.is_angry:
                 self.actual_atack = choice(self.atacks_list)
+                self.action = 'atack'
             else:
                 self.actual_atack = choice(self.a_atacks_list)
+                self.action = 'a_atack'
+
+                if self.actual_atack == 'a2':
+                    if random() > 0.5:
+                        self.rot_increase *= -1
+                if self.actual_atack == 'a3':
+                    if random() > 0.5:
+                        self.angle_shot = radians(90)
+                    else:
+                        self.angle_shot = radians(270)
             self.outline = False
         else:
             if self.damage_ticks <= 0:
                 if self.rect.colliderect(player.rect):
-                    if player.x > self.x - 13 and player.x < self.x + 13:
+                    if player.x > self.x - 11 and player.x < self.x + 11:
                         if player.rect.bottom > self.rect.top  + 17 and player.rect.top < self.rect.top + 17:
                             self.damage()
                             player.jump()
@@ -93,7 +113,11 @@ class Cactus1(Obj):
         if self.atack_ticks > self.atack_time[self.actual_atack]:
             self.atack_ticks = 0
             self.is_atack = False
-            self.action = 'idle'
+
+            if self.is_angry:
+                self.action = 'a_idle'
+            else:
+                self.action = 'idle'
         else:
             if self.atack_ticks > 80:
                 if self.actual_atack == '1':
@@ -113,10 +137,26 @@ class Cactus1(Obj):
                         self.atack3()
                 if self.actual_atack == 'a1':
                     self.shot_ticks += 1 * dt
-                    if self.shot_ticks > 15:
+                    if self.shot_ticks > 30:
                         self.shot_ticks = 0
                         self.atacka1(player.x, player.y)
-
+                if self.actual_atack == 'a2':
+                    self.shot_ticks += 1 * dt
+                    if self.shot_ticks > 5:
+                        self.angle_shot += self.rot_increase
+                        self.shot_ticks = 0
+                        self.atacka2()
+                if self.actual_atack == 'a3':
+                    self.shot_ticks += 1 * dt
+                    if self.shot_ticks > 25:
+                        self.shot_ticks = 0
+                        self.atacka3()
+                        self.angle_shot += radians(13)
+                if self.actual_atack == 'a4':
+                    self.shot_ticks += 1 * dt
+                    if self.shot_ticks > 5:
+                        self.shot_ticks = 0
+                        self.atacka4(player.x, player.y)
 
     def atack1(self, player_x, player_y):
         hyp = hypot((player_x - self.mouth_pos[0]), (player_y - self.mouth_pos[1]))
@@ -130,45 +170,103 @@ class Cactus1(Obj):
         self.shots.append(shot)
 
     def atack2(self):
-        c = cos(radians(uniform(0, 360)))
-        s = sin(radians(uniform(0, 360)))
+        angle = radians(randint(0, 360))
 
-        while abs(c) < 2 and abs(s) < 2:
-            c *= 1.01
-            s *= 1.01
+        c = cos(angle)
+        s = sin(angle)
 
         rot_angle  = degrees(atan2(-s, c))
         shot = self.shot([c, s], rot_angle, 1, config.OBJS['thorn'])
         self.shots.append(shot)
 
     def atack3(self):
-        angle = randint(0, 360)
-        space = randint(360//7, 360/5)
-        for _ in range(int(360/space)):
-            c = cos(radians(angle))
-            s = sin(radians(angle))
+        angle = radians(randint(0, 360))
+        space = radians(360//5)
+        for _ in range(int(2*pi/space)):
+            c = cos(angle)
+            s = sin(angle)
 
-            angle -= space
             rot_angle = degrees(atan2(-s, c))
             shot = self.shot([c, s], rot_angle, 2, config.OBJS['thorn'])
             self.shots.append(shot)
+            angle += space
 
     def atacka1(self, player_x, player_y):
-        hyp = hypot((player_x - self.mouth_pos[0]), (player_y - self.mouth_pos[1]))
+
+        hyp  = hypot((player_x - self.mouth_pos[0]), (player_y - self.mouth_pos[1]))
+        mov  = [0, 0]
+        if hyp != 0:
+            mov[0]  = (player_x  - self.mouth_pos[0]) / hyp
+            mov[1]  = (player_y  - self.mouth_pos[1]) / hyp
+
+        rot_angle = degrees(atan2(-mov[1] , mov[0] ))
+        
+        sep = 50
+        angle1 = radians(sep) + radians(rot_angle)
+        angle2 = -radians(sep) + radians(rot_angle)
+        mov1 = [cos(angle1), - sin(angle1)]
+        mov2 = [cos(angle2), - sin(angle2)]
+
+        rot_angle1 = degrees(atan2(-mov1[1], mov1[0]))
+        rot_angle2 = degrees(atan2(-mov2[1], mov2[0]))
+        
+        shot  = self.shot(mov , rot_angle , 2, config.OBJS['thorn'], (200, 0, 0), 1.5)
+        shot1 = self.shot(mov1, rot_angle1, 2, config.OBJS['thorn'], (200, 0, 0), 1.5)
+        shot2 = self.shot(mov2, rot_angle2, 2, config.OBJS['thorn'], (200, 0, 0), 1.5)
+
+        self.shots.append(shot )
+        self.shots.append(shot1)
+        self.shots.append(shot2)
+
+    def atacka2(self):
+        angle = self.angle_shot
+        space = radians(360//5)
+        for _ in range(int(2*pi/space)):
+            c = cos(angle)
+            s = sin(angle)
+
+            rot_angle = degrees(atan2(-s, c))
+            shot = self.shot([c, s], rot_angle, 2, config.OBJS['thorn'], (200, 0, 0), 0.5)
+            self.shots.append(shot)
+            angle += space
+
+    def atacka3(self):
+        angle  = self.angle_shot
+        angle1 = -self.angle_shot  + radians(180)
+
+        c = cos(angle)
+        s = sin(angle)
+
+        c1 = cos(angle1)
+        s1 = sin(angle1)
+
+        rot_angle  = degrees(atan2(-s, c))
+        rot_angle1 = degrees(atan2(-s1, c1))
+        shot = self.shot([c, s], rot_angle, 3, config.OBJS['thorn'], (200, 0, 0), 3)
+        shot1 = self.shot([c1, s1], rot_angle1, 3, config.OBJS['thorn'], (200, 0, 0), 3)
+        self.shots.append(shot)
+        self.shots.append(shot1)
+
+    def atacka4(self, player_x, player_y):
+        x_pos = randint(0, config.camera.display.get_width()) + config.camera.x
+        y_pos = -10 + config.camera.y
+        hyp = hypot((player_x - x_pos), (player_y - y_pos))
         mov = [0, 0]
         if hyp != 0:
-            mov[0] = (player_x - self.mouth_pos[0]) / hyp
-            mov[1] = (player_y - self.mouth_pos[1]) / hyp
+            mov[0] = (player_x - x_pos) / hyp
+            mov[1] = (player_y - y_pos) / hyp
         
         rot_angle = degrees(atan2(-mov[1], mov[0]))
-        shot = self.shot(mov, rot_angle, 2, config.OBJS['thorn'], (200, 0, 0), 2)
+        shot = self.shot(mov, rot_angle, 2, config.OBJS['thorn'], (200, 0, 0), 0.5)
+        shot.x = x_pos 
+        shot.y = y_pos
         self.shots.append(shot)
 
     def shot(self, mov, angle, vel, obj, outline_color= (1, 1, 1), size = 1):
         shot = obj.get_copy()
-        shot.width *= size
+        shot.width = int(shot.width * size)
         shot.x = self.mouth_pos[0]
-        shot.y = self.mouth_pos[1]
+        shot.y = self.mouth_pos[1] 
         shot.mov = mov
         shot.rot_angle = angle
         shot.vel = vel
@@ -211,10 +309,13 @@ class Cactus1(Obj):
     def damage_update(self, dt):
         self.damage_ticks -= 1 * dt
         if int(self.damage_ticks) == 0:
-            self.action = 'idle'
+            if self.is_angry:
+                self.action = 'a_idle'
+            else:
+                self.action = 'idle'
 
     def damage(self):
-        self.life -= 3
+        self.life -= 4
         self.action = 'damage'
         self.damage_ticks = 10
         config.camera.shake([-3, 3], [-3, 3], 10)

@@ -50,7 +50,7 @@ OBJS['bg'].height = int(display.get_height() * 1.5)
 OBJS['bg'].width = int(display.get_width() * 1.5)
     #player
 OBJS['player'].add_imgs_data(ANIMATIONS['player_idle'], 'idle', [15, 15])
-OBJS['player'].add_imgs_data(ANIMATIONS['player_run'], 'run', [10, 10])
+OBJS['player'].add_imgs_data(ANIMATIONS['player_run'], 'run', [7, 7])
 OBJS['player'].add_imgs_data(ANIMATIONS['player_damage'], 'damage', [2, 10])
 OBJS['player'].action = 'idle'
 OBJS['player'].total_jumps = 2
@@ -61,6 +61,8 @@ OBJS['player'].mass = 0.6
 OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_idle'], 'idle', [10, 10, 10, 10])
 OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_atack'], 'atack', [10, 10, 10, 10])
 OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_damage'], 'damage', [3, 3, 3, 3])
+OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_a_idle'], 'a_idle', [10, 10, 10, 10])
+OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_a_atack'], 'a_atack', [10, 10, 10, 10])
 OBJS['cactus1'].action = 'idle'
 OBJS['cactus1'].width = 80
 OBJS['cactus1'].height = 80
