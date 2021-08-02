@@ -211,15 +211,15 @@ class Camera:
         self.shake_update(dt)
 
     def limit(self, limit_x, limit_y):
-        if self.true_x < limit_x[0]:
+        if self.true_x * self.zoom < limit_x[0]:
            self.true_x = limit_x[0]
-        if self.true_x > limit_x[1]:
-           self.true_x = limit_x[1]
+        if self.true_x > limit_x[1] * self.zoom:
+           self.true_x = limit_x[1] * self.zoom
         
-        if self.true_y < limit_y[0]:
-           self.true_y = limit_y[0]
-        if self.true_y > limit_y[1]:
-           self.true_y = limit_y[1]
+        if self.true_y * self.zoom < limit_y[0]:
+           self.true_y = limit_y[0] 
+        if self.true_y > limit_y[1] * self.zoom:
+           self.true_y = limit_y[1] * self.zoom
 
     def shake(self, x_range, y_range, time):
         self.shake_ticks = time

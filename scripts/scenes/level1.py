@@ -20,6 +20,8 @@ class Level1:
         self.player.x = 90
         self.player.y = 50
         self.player.build_hearts()
+        self.lock_player = True
+
             #cactus
         cactus_tile = self.tiles[96]
         self.cactus.x = cactus_tile.x + 8
@@ -29,6 +31,9 @@ class Level1:
 
         #CAMERA
         camera.target = self.player
+
+        self.cutscene_ticks = 0
+        self.start = False
         
         self.loop = True
     def events(self):
@@ -41,7 +46,8 @@ class Level1:
                 if event.type == pygame.K_SPACE:
                     self.loop = False
 
-            self.player.control(event)
+            if not self.lock_player:
+                self.player.control(event)
 
     def draw(self):
         self.bg.draw(display, -int(camera.x * 0.7) , -int(camera.y * 0.7))
@@ -77,16 +83,51 @@ class Level1:
         #PLAYER
         self.player.update(dt)
         self.player.collision_move(self.tiles, dt)
-        self.player.anim(dt)     
 
         #CACTUS
         self.cactus.update(self.player, dt)
+        self.player.anim(dt)     
         self.cactus.anim(dt)
 
         #PARTICLES
         particles_mng.update(dt)
-        #debug
+        
+        #CUTSCENE
+        if self.cutscene_ticks < 1000:
+            self.update_cutscene(dt)
 
+    def update_cutscene(self, dt):
+
+        self.cutscene_ticks += 1 * dt
+        self.cactus.idle_ticks = 0
+
+        if int(self.cutscene_ticks) < 30:
+            pass
+
+        elif int(self.cutscene_ticks) >= 30 and int(self.cutscene_ticks) <= 160:
+            camera.delay_x = 200
+            camera.delay_y = 100
+            camera.target = self.cactus
+
+            if camera.zoom <= 2:
+                camera.zoom += 0.01 * dt
+
+            draw_text(display, 'CACSHOT', 160 - camera.x, 140 - camera.y, 15, 'assets/fonts/Comodore64.TTF')
+
+        elif int(self.cutscene_ticks) >= 160 and int(self.cutscene_ticks) <= 190:
+            camera.delay_x = 30
+            camera.delay_y = 50 
+            camera.target = self.player
+            if camera.zoom > 1:
+                camera.zoom -= 0.04 * dt
+
+        else:
+            self.cutscene_ticks = 1000
+            self.lock_player = False
+            camera.zoom = 1
+            camera.delay_x = 20
+            camera.delay_y = 50
+    
     def load_tiles(self, map_data):
         tiles = []
         y = 0

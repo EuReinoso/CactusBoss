@@ -18,10 +18,10 @@ class Cactus1(Obj):
         self.a_atacks_list = ['a1', 'a2', 'a3', 'a4']
         self.actual_atack = '1'
         self.is_atack = False
-        self.is_angry = True
+        self.is_angry = False
 
         self.idle_time_range = [200, 350]
-        self.idle_time = 120
+        self.idle_time = 5
         self.idle_ticks = 0
         self.shot_ticks = 0
 
@@ -101,8 +101,12 @@ class Cactus1(Obj):
                             
                             #vfx
                             p1 = CircleParticle(10, typ= '360', x= player.x, y= player.y + 10, mass= 0.5, mutation= -0.2,vel= 3, color= (148, 138, 131))
-                            p2 = CircleParticle(8, typ= '360', x= player.x, y= player.y + 10, mass= 1, mutation= -0.5, vel= 5, color= (148, 180, 131))
-                            p3 = CircleParticle(5, typ= '360', x= player.x, y= player.y + 10, mass= 5, mutation= -0.2, vel= 10, color= (148, 180, 131))
+                            if self.is_angry:
+                                p2 = CircleParticle(10, typ= '360', x= player.x, y= player.y + 10, mass= 1, mutation= -0.5, vel= 5, color= (170, 130, 131))
+                                p3 = CircleParticle(10, typ= '360', x= player.x, y= player.y + 10, mass= 5, mutation= -0.2, vel= 10, color= (170, 100, 120))
+                            else:
+                                p2 = CircleParticle(10, typ= '360', x= player.x, y= player.y + 10, mass= 1, mutation= -0.5, vel= 5, color= (148, 180, 131))
+                                p3 = CircleParticle(10, typ= '360', x= player.x, y= player.y + 10, mass= 5, mutation= -0.2, vel= 10, color= (140, 200, 125))
                             config.particles_mng.add_particles(p1, 10)
                             config.particles_mng.add_particles(p2, 20)
                             config.particles_mng.add_particles(p3, 30)
