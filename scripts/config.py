@@ -11,7 +11,7 @@ display = window.display
 #CAMERA
 camera = Camera(window)
 camera.delay_x = 20
-camera.delay_y = 50
+camera.delay_y = 20
 
 #CLOCK
 clock = Clock()
@@ -30,9 +30,15 @@ ANIMATIONS = imgs_mng.animations
 
 #OBJS
 objs_mng = ObjsManager()
-objs_mng.add_obj('bg', Obj(IMGS['background']))
-objs_mng.add_obj('tile1', Obj(IMGS['tile1']))
-objs_mng.add_obj('tile2', Obj(IMGS['tile2']))
+objs_mng.add_obj('mountains1', Obj(IMGS['background1']))
+objs_mng.add_obj('mountains2', Obj(IMGS['background2']))
+objs_mng.add_obj('tile_center', Obj(IMGS['tile1']))
+objs_mng.add_obj('tile_ground', Obj(IMGS['tile2']))
+objs_mng.add_obj('tile_left', Obj(IMGS['tile3']))
+objs_mng.add_obj('tile_right', Obj(IMGS['tile4']))
+objs_mng.add_obj('tile_f_center', Obj(IMGS['tile5']))
+objs_mng.add_obj('tile_f_left', Obj(IMGS['tile6']))
+objs_mng.add_obj('tile_f_right', Obj(IMGS['tile7']))
 objs_mng.add_obj('player', Player(ANIMATIONS['player_idle'][0]))
 objs_mng.add_obj('cactus1', Cactus1(ANIMATIONS['cactus_idle'][0]))
 objs_mng.add_obj('thorn', Shot(IMGS['thorn']))
@@ -44,10 +50,15 @@ objs_mng.add_obj('player_life', Obj(IMGS['player_life']))
 #OBJS CONFIG
 OBJS = objs_mng.objs.copy()
     #bg
-OBJS['bg'].y = display.get_height() / 2
-OBJS['bg'].x = display.get_width() / 2
-OBJS['bg'].height = int(display.get_height() * 1.5)
-OBJS['bg'].width = int(display.get_width() * 1.5)
+OBJS['mountains1'].y = 140
+OBJS['mountains1'].x = display.get_width() / 2
+OBJS['mountains1'].height = 150
+OBJS['mountains1'].width = int(display.get_width() * 1.5)
+OBJS['mountains2'].y = 90
+OBJS['mountains2'].x = display.get_width() / 2
+OBJS['mountains2'].height = 140
+OBJS['mountains2'].width = int(display.get_width() * 1.5)
+
     #player
 OBJS['player'].add_imgs_data(ANIMATIONS['player_idle'], 'idle', [15, 15])
 OBJS['player'].add_imgs_data(ANIMATIONS['player_run'], 'run', [7, 7])

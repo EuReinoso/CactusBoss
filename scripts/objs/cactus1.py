@@ -32,6 +32,12 @@ class Cactus1(Obj):
         self.shot_count = 0
         self.surprise_atack_ticks = 0
 
+        self.cutscene1_ticks = 0
+        self.is_cutscene1 = False
+
+        self.cutscene2_ticks = 0
+        self.is_cutscene2 = False
+
     def init(self):
         #FUTURE POLISH - make shots coming out of mouth
         self.mouth_pos = (self.x , self.y )
@@ -43,23 +49,29 @@ class Cactus1(Obj):
             self.flipped_x = False
 
     def update(self, player, dt):
-        if self.damage_ticks > 0:
-            self.damage_update(dt)
 
-        if self.is_atack:
-            self.atack_update(player, dt)
+        if self.is_cutscene1:
+            self.cutscene1_update(dt)
+        elif self.is_cutscene2:
+            self.cutscene2_update(dt)
         else:
-            self.idle_update(player, dt)
-        
-        self.shots_update(player, dt)
-        self.look_player(player.x)
-        self.lifebar_update()
+            if self.damage_ticks > 0:
+                self.damage_update(dt)
 
-        if self.is_angry:
-            self.surprise_atack_ticks += 1
-            if self.surprise_atack_ticks > 350:
-                self.surprise_atack_ticks = 0
-                self.atacka4(player.x, player.y)
+            if self.is_atack:
+                self.atack_update(player, dt)
+            else:
+                self.idle_update(player, dt)
+            
+            self.shots_update(player, dt)
+            self.look_player(player.x)
+            self.lifebar_update()
+
+            if self.is_angry:
+                self.surprise_atack_ticks += 1
+                if self.surprise_atack_ticks > 350:
+                    self.surprise_atack_ticks = 0
+                    self.atacka4(player.x, player.y)
 
     def idle_update(self, player, dt):
         #outlineupdate
@@ -291,6 +303,48 @@ class Cactus1(Obj):
                         self.shots.pop(i)
                         player.damage()
 
+    def cutscene1_update(self, dt):
+        self.cutscene1_ticks += 1 * dt
+        self.idle_ticks = 0
+
+        if int(self.cutscene1_ticks) < 250:
+            p1 = CircleParticle(7, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.1,vel= 3, color= (255,245,238))
+            p2 = CircleParticle(15, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.2, vel= 5, color= (165,42,42))
+            p3 = CircleParticle(10, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.3, vel= 10, color= (219,112,147))
+            config.particles_mng.add_particles(p1, 1)
+            config.particles_mng.add_particles(p2, 1)
+            config.particles_mng.add_particles(p3, 1)
+        
+        elif int(self.cutscene1_ticks) > 250 and int(self.cutscene1_ticks) < 300:
+            pass
+
+        else:
+            p1 = CircleParticle(20, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.1,vel= 3, color= (100, 100, 100))
+            p2 = CircleParticle(10, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.2, vel= 5, color= (150, 150, 150))
+            config.particles_mng.add_particles(p1, 40)
+            config.particles_mng.add_particles(p2, 50)
+            self.is_cutscene1 = False
+            self.action = 'a_idle'
+    
+    def cutscene2_update(self, dt):
+        self.cutscene2_ticks += 1 * dt
+        self.idle_ticks = 0
+
+        if int(self.cutscene2_ticks) < 250:
+            p1 = CircleParticle(7, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.1,vel= 3, color= (255,245,238))
+            p2 = CircleParticle(15, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.2, vel= 5, color= (119,136,153))
+            p3 = CircleParticle(10, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.3, vel= 10, color= (220,220,220))
+            config.particles_mng.add_particles(p1, 1)
+            config.particles_mng.add_particles(p2, 1)
+            config.particles_mng.add_particles(p3, 1)
+
+        else:
+            p1 = CircleParticle(20, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.1,vel= 2, color= (150, 150, 150))
+            p2 = CircleParticle(10, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.05, vel= 7, color= (100, 100, 100))
+            config.particles_mng.add_particles(p1, 50)
+            config.particles_mng.add_particles(p2, 70)
+            self.is_dead = True
+        
     def add_lifebar(self, obj):
         self.lifebar = obj
 
@@ -306,9 +360,12 @@ class Cactus1(Obj):
             self.actual_life = '2'
             self.life = self.lifes['2']
             self.lifebar.del_liferect()
+            self.is_cutscene1 = True
             self.is_angry = True
+            self.action = 'damage'
         if self.get_life_percent() <= 0 and self.actual_life == '2':
-            self.is_dead = True
+            self.action = 'damage'
+            self.is_cutscene2 = True
 
     def damage_update(self, dt):
         self.damage_ticks -= 1 * dt
@@ -319,7 +376,7 @@ class Cactus1(Obj):
                 self.action = 'idle'
 
     def damage(self):
-        self.life -= 4
+        self.life -= 5
         self.action = 'damage'
         self.damage_ticks = 10
         config.camera.shake([-3, 3], [-3, 3], 10)

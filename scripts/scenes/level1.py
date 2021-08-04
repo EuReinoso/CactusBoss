@@ -3,15 +3,17 @@ pygame.init()
 
 from scripts.config import OBJS, clock, display, camera, particles_mng
 from scripts.pgengine import *
+from scripts.scenes.scene import Scene
 
-class Level1:
+class Level1(Scene):
     def __init__(self):
         #MAP ------------------------------------------------------------
         self.map = load_map('assets/maps/map1.txt')
         self.tiles = self.load_tiles(self.map)
 
         #OBJS ------------------------------------------------------------
-        self.bg     = OBJS['bg'].get_copy()
+        self.mountains1 = OBJS['mountains1'].get_copy()
+        self.mountains2 = OBJS['mountains2'].get_copy()
         self.player = OBJS['player'].get_copy()
         self.cactus = OBJS['cactus1'].get_copy()
 
@@ -35,6 +37,8 @@ class Level1:
         self.cutscene_ticks = 0
         self.start = False
         
+        self.win_ticks = 0
+
         self.loop = True
     def events(self):
         for event in pygame.event.get():
@@ -50,13 +54,15 @@ class Level1:
                 self.player.control(event)
 
     def draw(self):
-        self.bg.draw(display, -int(camera.x * 0.7) , -int(camera.y * 0.7))
+        display.fill((189, 149, 106))
+        self.mountains2.draw(display, -int(camera.x * 0.3), -int(camera.y * 0.3))
+        self.mountains1.draw(display, -int(camera.x * 0.6), -int(camera.y * 0.7))
 
         for tile in self.tiles:
             tile.draw(display, -camera.x, -camera.y)
 
-        self.cactus.draw(display, -camera.x, -camera.y)
         if not self.cactus.is_dead:
+            self.cactus.draw(display, -camera.x, -camera.y)
             #ui
             self.cactus.lifebar.draw_liferects(display)
             self.cactus.lifebar.draw(display)
@@ -83,18 +89,29 @@ class Level1:
         #PLAYER
         self.player.update(dt)
         self.player.collision_move(self.tiles, dt)
+        self.player.anim(dt)     
+        if self.player.dead:
+            self.restart()
+            self.cactus.shots = []
+            return 'restartmenu'
 
         #CACTUS
-        self.cactus.update(self.player, dt)
-        self.player.anim(dt)     
-        self.cactus.anim(dt)
-
+        if not self.cactus.is_dead:
+            self.cactus.update(self.player, dt)
+            self.cactus.anim(dt)
+        else:
+            self.win_ticks += 1 * dt
+            if int(self.win_ticks) > 200:
+                self.restart()
+                self.cactus.shots = []
+                return 'restartmenu'
         #PARTICLES
         particles_mng.update(dt)
         
         #CUTSCENE
         if self.cutscene_ticks < 1000:
             self.update_cutscene(dt)
+
 
     def update_cutscene(self, dt):
 
@@ -114,7 +131,7 @@ class Level1:
 
             draw_text(display, 'CACSHOT', 160 - camera.x, 140 - camera.y, 15, 'assets/fonts/Comodore64.TTF')
 
-        elif int(self.cutscene_ticks) >= 160 and int(self.cutscene_ticks) <= 190:
+        elif int(self.cutscene_ticks) >= 160 and int(self.cutscene_ticks) <= 170:
             camera.delay_x = 30
             camera.delay_y = 50 
             camera.target = self.player
@@ -128,26 +145,3 @@ class Level1:
             camera.delay_x = 20
             camera.delay_y = 50
     
-    def load_tiles(self, map_data):
-        tiles = []
-        y = 0
-        for row in map_data:
-            x = 0
-            for tile in row:
-                is_tile = False
-                if tile == '1':
-                    new_tile = OBJS['tile1'].get_copy()
-                    is_tile = True
-                    
-                if tile == '2':
-                    new_tile = OBJS['tile2'].get_copy()
-                    is_tile = True
-
-                if is_tile:
-                    new_tile.x = x * new_tile.width
-                    new_tile.y = y * new_tile.height
-                    tiles.append(new_tile)
-
-                x += 1
-            y += 1
-        return tiles
