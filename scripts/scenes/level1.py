@@ -1,7 +1,7 @@
 import pygame, sys
 pygame.init()
 
-from scripts.config import OBJS, clock, display, camera, particles_mng
+from scripts.config import OBJS, clock, display, camera, particles_mng, reset
 from scripts.pgengine import *
 from scripts.scenes.scene import Scene
 
@@ -92,7 +92,6 @@ class Level1(Scene):
         self.player.anim(dt)     
         if self.player.dead:
             self.restart()
-            self.cactus.shots = []
             return 'restartmenu'
 
         #CACTUS
@@ -103,8 +102,7 @@ class Level1(Scene):
             self.win_ticks += 1 * dt
             if int(self.win_ticks) > 200:
                 self.restart()
-                self.cactus.shots = []
-                return 'restartmenu'
+                return 'winmenu'
         #PARTICLES
         particles_mng.update(dt)
         
@@ -129,7 +127,7 @@ class Level1(Scene):
             if camera.zoom <= 2:
                 camera.zoom += 0.01 * dt
 
-            draw_text(display, 'CACSHOT', 160 - camera.x, 140 - camera.y, 15, 'assets/fonts/Comodore64.TTF')
+            draw_text(display, 'CACSHOTO', 160 - camera.x, 140 - camera.y, 15, 'assets/fonts/Comodore64.TTF')
 
         elif int(self.cutscene_ticks) >= 160 and int(self.cutscene_ticks) <= 170:
             camera.delay_x = 30
@@ -144,4 +142,6 @@ class Level1(Scene):
             camera.zoom = 1
             camera.delay_x = 20
             camera.delay_y = 50
+
     
+        

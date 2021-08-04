@@ -4,6 +4,16 @@ from scripts.objs.cactus1 import Cactus1
 from scripts.objs.shot import Shot
 from scripts.objs.lifebar import LifeBar
 
+def reset():
+    OBJS['cactus1'].shots = []
+    OBJS['player'].hearts = []
+    OBJS['lifebar'].life_rect = []
+    OBJS['lifebar'].add_liferect(OBJS['liferect_r'])
+    OBJS['lifebar'].add_liferect(OBJS['liferect_g'])
+
+    particles_mng.particles = []
+    camera.shake_ticks = 0
+
 #WINDOW
 window  = Window(900, 600, 'CactusBoss')
 display = window.display

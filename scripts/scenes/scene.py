@@ -1,5 +1,4 @@
-import pygame
-from scripts.config import OBJS
+from scripts.config import OBJS, reset
 
 
 class Scene:
@@ -14,9 +13,9 @@ class Scene:
         pass
 
     def restart(self):
+        reset()
         self.__init__()
         
-
     def load_tiles(self, map_data):
         tiles = []
         y = 0

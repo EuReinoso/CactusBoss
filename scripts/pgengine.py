@@ -1,5 +1,5 @@
 import pygame
-from math import sin, cos, radians, ceil, floor
+from math import sin, cos, radians
 from random import random, uniform, randint
 
 from pygame import mask

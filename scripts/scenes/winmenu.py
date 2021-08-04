@@ -4,7 +4,7 @@ from scripts.config import OBJS, display, camera, clock
 from math import sin
 from scripts.pgengine import *
 
-class RestartMenu(Scene):
+class WinMenu(Scene):
     def __init__(self):
         super().__init__()
         self.end = False
@@ -27,7 +27,7 @@ class RestartMenu(Scene):
         self.mountains2.draw(display, -int(camera.x * 0.3), -int(camera.y * 0.3))
         self.mountains1.draw(display, -int(camera.x * 0.6), -int(camera.y * 0.7))
 
-        draw_text(display, 'SPACE TO PLAY', 53, 45, 18, 'assets/fonts/Comodore64.TTF')
+        draw_text(display, 'YOU WIN!', 75, 45, 18, 'assets/fonts/Comodore64.TTF')
 
     def update(self):
         clock.dt_update()

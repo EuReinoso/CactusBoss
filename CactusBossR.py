@@ -4,12 +4,12 @@ pygame.init()
 from scripts.config import *
 from scripts.scenes.level1 import Level1
 from scripts.scenes.restartmenu import RestartMenu
+from scripts.scenes.winmenu import WinMenu
 
 class Game:
     def __init__(self):
         #SCENES
-        self.scenes = {'level1' : Level1(), 'restartmenu' : RestartMenu()}
-        self.actual_scene = self.scenes['restartmenu']
+        self.actual_scene = self.change_scene('restartmenu')
         self.loop = True
 
     def update(self):
@@ -29,11 +29,23 @@ class Game:
                 window.blit_display(zoom= camera.zoom)
                 pygame.display.update()
 
-                if new_scene != None:
-                    self.actual_scene = self.scenes[new_scene]
+                if new_scene != None: 
+                    self.actual_scene = self.change_scene(new_scene)
 
         pygame.quit()
         sys.exit() 
+
+    def change_scene(self, new_scene):
+        if new_scene == 'restartmenu':
+            return RestartMenu()
+
+        if new_scene == 'level1':
+            return Level1()
+
+        if new_scene == 'winmenu':
+            return WinMenu()
+
+
 
 if __name__ == '__main__':
     Game().update()
