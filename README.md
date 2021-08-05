@@ -1,5 +1,5 @@
 # CactusBoss
-Jogo de BossFight desenvolvido em Python/Pygame para uma gamejam.
+Jogo de BossFight desenvolvido em Python/Pygame (sem engines) para uma gamejam.
 
 ## EP1:
 Para melhores explicações, veja o vídeo:
