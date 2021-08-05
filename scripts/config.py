@@ -1,4 +1,4 @@
-from scripts.pgengine import ImgsManager, ObjsManager, Obj, Window, Camera, Clock, ParticleManager
+from scripts.pgengine import ImgsManager, ObjsManager, Obj, Window, Camera, Clock, ParticleManager, SoundManager
 from scripts.objs.player import Player
 from scripts.objs.cactus1 import Cactus1
 from scripts.objs.shot import Shot
@@ -10,7 +10,7 @@ def reset():
     OBJS['lifebar'].life_rect = []
     OBJS['lifebar'].add_liferect(OBJS['liferect_r'])
     OBJS['lifebar'].add_liferect(OBJS['liferect_g'])
-
+    sound_mng.stop_music()
     particles_mng.particles = []
     camera.shake_ticks = 0
 
@@ -29,6 +29,16 @@ clock.fps = 144
 
 #TILE
 TILE_SIZE = 16
+
+#SOUNDS
+sound_mng = SoundManager()
+sound_mng.add_sounds_from_past('assets/sounds/sfx/')
+sound_mng.add_sounds_from_past('assets/sounds/musics/', 'mp3')
+sound_mng.sounds['jump'].set_volume(0.5)
+sound_mng.sounds['shot'].set_volume(0.5)
+sound_mng.sounds['shot2'].set_volume(0.5)
+sound_mng.sounds['cactus_powerup'].set_volume(0.3)
+sound_mng.sounds['explosion'].set_volume(0.4)
 
 #IMAGES
 imgs_path = 'assets/images/'
@@ -88,7 +98,7 @@ OBJS['cactus1'].action = 'idle'
 OBJS['cactus1'].width = 80
 OBJS['cactus1'].height = 80
     #cactuslifebar
-OBJS['lifebar'].y = 6
+OBJS['lifebar'].y = 10
 OBJS['lifebar'].x = display.get_width() / 2
 OBJS['lifebar'].height = 5
 OBJS['lifebar'].width  = 200

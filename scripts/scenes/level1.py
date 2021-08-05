@@ -1,12 +1,13 @@
 import pygame, sys
 pygame.init()
 
-from scripts.config import OBJS, clock, display, camera, particles_mng, reset
+from scripts.config import OBJS, clock, display, camera, particles_mng, sound_mng
 from scripts.pgengine import *
 from scripts.scenes.scene import Scene
 
 class Level1(Scene):
     def __init__(self):
+        sound_mng.set_music('assets/sounds/musics/sidescroller.mp3')
         #MAP ------------------------------------------------------------
         self.map = load_map('assets/maps/map1.txt')
         self.tiles = self.load_tiles(self.map)
@@ -110,7 +111,6 @@ class Level1(Scene):
         if self.cutscene_ticks < 1000:
             self.update_cutscene(dt)
 
-
     def update_cutscene(self, dt):
 
         self.cutscene_ticks += 1 * dt
@@ -118,6 +118,9 @@ class Level1(Scene):
 
         if int(self.cutscene_ticks) < 30:
             pass
+        
+        elif int(self.cutscene_ticks) == 30:
+            sound_mng.sounds['level1_cutscene'].play()
 
         elif int(self.cutscene_ticks) >= 30 and int(self.cutscene_ticks) <= 160:
             camera.delay_x = 200
@@ -137,6 +140,7 @@ class Level1(Scene):
                 camera.zoom -= 0.04 * dt
 
         else:
+            sound_mng.play_music(0.15)
             self.cutscene_ticks = 1000
             self.lock_player = False
             camera.zoom = 1

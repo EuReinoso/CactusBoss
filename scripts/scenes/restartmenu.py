@@ -1,12 +1,14 @@
 import pygame, sys
 from scripts.scenes.scene import Scene
-from scripts.config import OBJS, display, camera, clock
+from scripts.config import OBJS, display, camera, clock, sound_mng
 from math import sin
 from scripts.pgengine import *
 
 class RestartMenu(Scene):
     def __init__(self):
         super().__init__()
+        sound_mng.set_music('assets/sounds/musics/desert.mp3')
+        sound_mng.play_music(0.3)
         self.end = False
 
         self.camera_ticks = 0

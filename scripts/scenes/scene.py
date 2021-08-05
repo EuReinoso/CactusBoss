@@ -13,8 +13,8 @@ class Scene:
         pass
 
     def restart(self):
-        reset()
         self.__init__()
+        reset()
         
     def load_tiles(self, map_data):
         tiles = []

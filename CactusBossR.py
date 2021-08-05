@@ -9,7 +9,7 @@ from scripts.scenes.winmenu import WinMenu
 class Game:
     def __init__(self):
         #SCENES
-        self.actual_scene = self.change_scene('restartmenu')
+        self.actual_scene = self.change_scene('restartmenu') 
         self.loop = True
 
     def update(self):

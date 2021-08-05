@@ -6,7 +6,6 @@ from pygame import mask
 
 pygame.init()
 pygame.font.init()
-pygame.mixer.init()
 
 #globals
 GRAVITY = 0.3
@@ -24,11 +23,6 @@ def draw_text(surface, text, x, y, size, font = None, color= (0, 0, 0)):
     text_font = pygame.font.Font(font, size)
     render = text_font.render(text, False, color)
     surface.blit(render, (x, y))
-
-def load_sound(path, vol = 1, format= '.wav'):
-    sound = pygame.mixer.Sound(path + format)
-    sound.set_volume(vol)
-    return sound
 
 def load_map(path):
     tiles_list = []
@@ -63,6 +57,38 @@ def scroll_limit(scroll, limit):
         scroll = limit[0] 
     elif scroll > limit[1]: 
         scroll = limit[1]
+
+#SOUNDMANAGER
+pygame.mixer.init()
+
+def load_sound(path, a_type= 'wav', vol = 1):
+    sound = pygame.mixer.Sound(path + '.' + a_type)
+    sound.set_volume(vol)
+    return sound
+
+class SoundManager:
+    def __init__(self):
+        self.sounds = {}
+
+    def add_sounds_from_past(self, past_path : str, a_type = 'wav', vol= 1):
+        for _, _, files in walk(past_path):
+            for file in files:
+                file = file.removesuffix('.' + a_type)
+                sound = load_sound(past_path + file, a_type, vol = vol)
+                self.sounds[file] = sound
+            break
+
+    def set_music(self, music):
+        pygame.mixer.music.load(music)
+
+    def play_music(self, vol= 1):
+        pygame.mixer.music.set_volume(vol)
+        pygame.mixer.music.play(-1)
+    
+    def stop_music(self):
+        pygame.mixer.music.stop()
+
+
 
 #PARTICLEMANAGER
 

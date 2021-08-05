@@ -57,6 +57,7 @@ class Player(Platformer):
                 self.y_momentum = 0 
 
     def jump(self):
+        config.sound_mng.sounds['jump'].play()
         self.y_momentum = - self.jump_force 
 
     def update(self, dt):
@@ -122,6 +123,9 @@ class Player(Platformer):
         config.particles_mng.add_particles(p1, 10)
         config.particles_mng.add_particles(p2, 20)
         config.particles_mng.add_particles(p3, 5)
+
+        #sfx
+        config.sound_mng.sounds['hitplayer'].play()
         
 
     def imuniti_update(self, dt):

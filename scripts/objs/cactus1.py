@@ -85,7 +85,7 @@ class Cactus1(Obj):
             self.idle_ticks = 0
             self.idle_time = self._get_idle_time()
             self.is_atack = True
-
+            self.outline = False
             if not self.is_angry:
                 self.actual_atack = choice(self.atacks_list)
                 self.action = 'atack'
@@ -101,7 +101,8 @@ class Cactus1(Obj):
                         self.angle_shot = radians(90)
                     else:
                         self.angle_shot = radians(270)
-            self.outline = False
+            #sfx
+            config.sound_mng.sounds['cactus_laugh2'].play()
         else:
             if self.damage_ticks <= 0:
                 if self.rect.colliderect(player.rect):
@@ -141,38 +142,45 @@ class Cactus1(Obj):
                     if self.shot_ticks > 8:
                         self.shot_ticks = 0
                         self.atack1(player.x, player.y)
+                        self.play_shot_sound()
                 if self.actual_atack == '2':
                     self.shot_ticks += 1 * dt
                     if self.shot_ticks > 2:
                         self.shot_ticks = 0
                         self.atack2()
+                        self.play_shot_sound()
                 if self.actual_atack == '3':
                     self.shot_ticks += 1 * dt
                     if self.shot_ticks > 15:
                         self.shot_ticks = 0
                         self.atack3()
+                        self.play_shot_sound()
                 if self.actual_atack == 'a1':
                     self.shot_ticks += 1 * dt
                     if self.shot_ticks > 30:
                         self.shot_ticks = 0
                         self.atacka1(player.x, player.y)
+                        self.play_shot_sound()
                 if self.actual_atack == 'a2':
                     self.shot_ticks += 1 * dt
                     if self.shot_ticks > 5:
                         self.angle_shot += self.rot_increase
                         self.shot_ticks = 0
                         self.atacka2()
+                        self.play_shot_sound()
                 if self.actual_atack == 'a3':
                     self.shot_ticks += 1 * dt
                     if self.shot_ticks > 25:
                         self.shot_ticks = 0
                         self.atacka3()
                         self.angle_shot += radians(13)
+                        self.play_shot_sound()
                 if self.actual_atack == 'a4':
                     self.shot_ticks += 1 * dt
                     if self.shot_ticks > 5:
                         self.shot_ticks = 0
                         self.atacka4(player.x, player.y)
+                        self.play_shot_sound()
 
     def atack1(self, player_x, player_y):
         hyp = hypot((player_x - self.mouth_pos[0]), (player_y - self.mouth_pos[1]))
@@ -307,6 +315,10 @@ class Cactus1(Obj):
         self.cutscene1_ticks += 1 * dt
         self.idle_ticks = 0
 
+        if int(self.cutscene1_ticks) == 10:
+            config.sound_mng.sounds['cactus_powerup'].play()
+            config.sound_mng.sounds['cactus_laugh'].play()
+
         if int(self.cutscene1_ticks) < 250:
             p1 = CircleParticle(7, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.1,vel= 3, color= (255,245,238))
             p2 = CircleParticle(15, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.2, vel= 5, color= (165,42,42))
@@ -319,16 +331,28 @@ class Cactus1(Obj):
             pass
 
         else:
+            
+            self.is_cutscene1 = False
+            self.action = 'a_idle'
+            self.idle_ticks = self.idle_time - 3
+
+            #vfx
             p1 = CircleParticle(20, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.1,vel= 3, color= (100, 100, 100))
             p2 = CircleParticle(10, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.2, vel= 5, color= (150, 150, 150))
             config.particles_mng.add_particles(p1, 40)
             config.particles_mng.add_particles(p2, 50)
-            self.is_cutscene1 = False
-            self.action = 'a_idle'
-    
+
+            #sfx
+            config.sound_mng.sounds['cactus_powerup'].stop()
+            config.sound_mng.sounds['explosion'].play()
+
     def cutscene2_update(self, dt):
         self.cutscene2_ticks += 1 * dt
         self.idle_ticks = 0
+
+        if int(self.cutscene2_ticks) == 10:
+            config.sound_mng.sounds['cactus_powerup'].play()
+            config.sound_mng.sounds['no'].play()
 
         if int(self.cutscene2_ticks) < 250:
             p1 = CircleParticle(7, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.1,vel= 3, color= (255,245,238))
@@ -339,11 +363,18 @@ class Cactus1(Obj):
             config.particles_mng.add_particles(p3, 1)
 
         else:
+            self.is_dead = True
+
+            #vfx
             p1 = CircleParticle(20, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.1,vel= 2, color= (150, 150, 150))
             p2 = CircleParticle(10, typ= '360', x= self.x, y= self.y + 10, mass= 0, mutation= -0.05, vel= 7, color= (100, 100, 100))
             config.particles_mng.add_particles(p1, 50)
             config.particles_mng.add_particles(p2, 70)
-            self.is_dead = True
+
+            #sfx
+            config.sound_mng.sounds['cactus_powerup'].stop()
+            config.sound_mng.sounds['explosion'].play()
+            
         
     def add_lifebar(self, obj):
         self.lifebar = obj
@@ -379,6 +410,21 @@ class Cactus1(Obj):
         self.life -= 5
         self.action = 'damage'
         self.damage_ticks = 10
+
+        #vfx
         config.camera.shake([-3, 3], [-3, 3], 10)
 
+        #sfx
+        config.sound_mng.sounds['hitcactus'].play()
+
+        if random() > 0.5:
+            config.sound_mng.sounds['cactus_shout'].play()
+        else:
+            config.sound_mng.sounds['cactus_shout2'].play()
+
+    def play_shot_sound(self):
+        if random() > 0.5:
+            config.sound_mng.sounds['shot'].play()
+        else:
+            config.sound_mng.sounds['shot2'].play()
         
