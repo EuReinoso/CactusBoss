@@ -6,6 +6,10 @@ from random import randint, choice, random
 class Cactus1(Obj):
     def __init__(self, img):
         super().__init__(img)
+        self.action = 'idle'
+        self.width = 80
+        self.height = 80
+
         self.lifes = {'1' : 100, '2': 100}
         self.actual_life = '1'
         self.life = self.lifes[self.actual_life]
@@ -40,7 +44,10 @@ class Cactus1(Obj):
 
     def init(self):
         #FUTURE POLISH - make shots coming out of mouth
-        self.mouth_pos = (self.x , self.y )
+        self.mouth_pos = (self.x , self.y)
+        self.lifebar = config.OBJS['lifebar'].get_copy()
+        self.lifebar.add_liferect(config.OBJS['liferect_r'].get_copy())
+        self.lifebar.add_liferect(config.OBJS['liferect_g'].get_copy())
 
     def look_player(self, player_x):
         if player_x < self.x:
@@ -331,7 +338,6 @@ class Cactus1(Obj):
             pass
 
         else:
-            
             self.is_cutscene1 = False
             self.action = 'a_idle'
             self.idle_ticks = self.idle_time - 3
@@ -374,10 +380,6 @@ class Cactus1(Obj):
             #sfx
             config.sound_mng.sounds['cactus_powerup'].stop()
             config.sound_mng.sounds['explosion'].play()
-            
-        
-    def add_lifebar(self, obj):
-        self.lifebar = obj
 
     def get_life_percent(self):
         return self.life / self.lifes[self.actual_life]
@@ -427,4 +429,7 @@ class Cactus1(Obj):
             config.sound_mng.sounds['shot'].play()
         else:
             config.sound_mng.sounds['shot2'].play()
-        
+
+    def get_copy(self):
+        self.shots = []
+        return super().get_copy()

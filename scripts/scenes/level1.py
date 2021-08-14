@@ -3,14 +3,12 @@ pygame.init()
 
 from scripts.config import OBJS, clock, display, camera, particles_mng, sound_mng
 from scripts.pgengine import *
-from scripts.scenes.scene import Scene
+from scripts.scenes.level import Level
 
-class Level1(Scene):
-    def __init__(self):
+class Level1(Level):
+    def __init__(self, level_name):
+        super().__init__(level_name)
         sound_mng.set_music('assets/sounds/musics/sidescroller.mp3')
-        #MAP ------------------------------------------------------------
-        self.map = load_map('assets/maps/map1.txt')
-        self.tiles = self.load_tiles(self.map)
 
         #OBJS ------------------------------------------------------------
         self.mountains1 = OBJS['mountains1'].get_copy()
@@ -22,14 +20,13 @@ class Level1(Scene):
             # player
         self.player.x = 90
         self.player.y = 50
-        self.player.build_hearts()
+        self.player.init()
         self.lock_player = True
 
             #cactus
         cactus_tile = self.tiles[96]
         self.cactus.x = cactus_tile.x + 8
         self.cactus.y = cactus_tile.y - self.cactus.height/2 - cactus_tile.height/2
-        self.cactus.add_lifebar(OBJS['lifebar'].get_copy())
         self.cactus.init()
 
         #CAMERA
@@ -48,8 +45,8 @@ class Level1(Scene):
                 sys.exit()
 
             if event.type == pygame.KEYDOWN:
-                if event.type == pygame.K_SPACE:
-                    self.loop = False
+                if event.key == pygame.K_r:
+                    self.restart()
 
             if not self.lock_player:
                 self.player.control(event)

@@ -23,3 +23,7 @@ class LifeBar(Obj):
     def draw_liferects(self, display):
         for liferect in self.liferects:
             liferect.draw(display)
+
+    def get_copy(self):
+        self.liferects = []
+        return super().get_copy()

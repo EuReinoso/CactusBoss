@@ -9,10 +9,19 @@ pygame.init()
 class Player(Platformer):
     def __init__(self, img):
         super().__init__(img)
+        self.total_jumps = 2
+        self.jump_force = 3
+        self.xvel = 3
+        self.mass = 0.6
+        self.action = 'idle'
+
         self.life = 5
         self.hearts = []
         self.dead = False
         self.imuniti_ticks = 0
+
+    def init(self):
+        self.build_hearts()
 
     def control(self, event):
         if event.type == pygame.KEYDOWN:
@@ -133,6 +142,10 @@ class Player(Platformer):
             self.imuniti_ticks -= 1 * dt
             if int(self.imuniti_ticks) == 0:
                 self.action = 'idle'
+
+    def get_copy(self):
+        self.hearts = []
+        return super().get_copy()
 
 
     

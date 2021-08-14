@@ -1,15 +1,10 @@
-from scripts.pgengine import ImgsManager, ObjsManager, Obj, Window, Camera, Clock, ParticleManager, SoundManager
+from scripts.pgengine import ImgsManager, ObjsManager, Obj, Window, Camera, Clock, ParticleManager, SoundManager, load_map
 from scripts.objs.player import Player
 from scripts.objs.cactus1 import Cactus1
 from scripts.objs.shot import Shot
 from scripts.objs.lifebar import LifeBar
 
 def reset():
-    OBJS['cactus1'].shots = []
-    OBJS['player'].hearts = []
-    OBJS['lifebar'].life_rect = []
-    OBJS['lifebar'].add_liferect(OBJS['liferect_r'])
-    OBJS['lifebar'].add_liferect(OBJS['liferect_g'])
     sound_mng.stop_music()
     particles_mng.particles = []
     camera.shake_ticks = 0
@@ -83,20 +78,7 @@ OBJS['mountains2'].width = int(display.get_width() * 1.5)
 OBJS['player'].add_imgs_data(ANIMATIONS['player_idle'], 'idle', [15, 15])
 OBJS['player'].add_imgs_data(ANIMATIONS['player_run'], 'run', [7, 7])
 OBJS['player'].add_imgs_data(ANIMATIONS['player_damage'], 'damage', [2, 10])
-OBJS['player'].action = 'idle'
-OBJS['player'].total_jumps = 2
-OBJS['player'].jump_force = 3
-OBJS['player'].xvel = 3
-OBJS['player'].mass = 0.6
-    #cactus1
-OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_idle'], 'idle', [10, 10, 10, 10])
-OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_atack'], 'atack', [10, 10, 10, 10])
-OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_damage'], 'damage', [3, 3, 3, 3])
-OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_a_idle'], 'a_idle', [10, 10, 10, 10])
-OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_a_atack'], 'a_atack', [10, 10, 10, 10])
-OBJS['cactus1'].action = 'idle'
-OBJS['cactus1'].width = 80
-OBJS['cactus1'].height = 80
+
     #cactuslifebar
 OBJS['lifebar'].y = 10
 OBJS['lifebar'].x = display.get_width() / 2
@@ -104,6 +86,18 @@ OBJS['lifebar'].height = 5
 OBJS['lifebar'].width  = 200
 OBJS['lifebar'].add_liferect(OBJS['liferect_r'])
 OBJS['lifebar'].add_liferect(OBJS['liferect_g'])
+    #cactus1
+OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_idle'], 'idle', [10, 10, 10, 10])
+OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_atack'], 'atack', [10, 10, 10, 10])
+OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_damage'], 'damage', [3, 3, 3, 3])
+OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_a_idle'], 'a_idle', [10, 10, 10, 10])
+OBJS['cactus1'].add_imgs_data(ANIMATIONS['cactus_a_atack'], 'a_atack', [10, 10, 10, 10])
 
 #PARTICLES
 particles_mng = ParticleManager()
+
+MAPS_PATH = {
+    'tutorial' : 'assets/maps/tutorial_map.txt',
+    'level1' :   'assets/maps/map1.txt',
+    'level2' :   'assets/maps/map2.txt'
+}
