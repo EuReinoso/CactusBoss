@@ -1,7 +1,7 @@
 import pygame, sys
 pygame.init()
 
-from scripts.config import OBJS, clock, display, camera, particles_mng, sound_mng
+from scripts.config import OBJS, camera, particles_mng, sound_mng
 from scripts.pgengine import *
 from scripts.scenes.level import Level
 
@@ -29,21 +29,16 @@ class Level1(Level):
         self.cactus.y = cactus_tile.y - self.cactus.height/2 - cactus_tile.height/2
         self.cactus.init()
 
-        #CAMERA
+            #camera
         camera.target = self.player
-
-        self.cutscene_ticks = 0
-        self.start = False
         
+        #cutscene stuff
+        self.is_drawing_boss_name = False
+        self.cutscene_ticks = 0
         self.win_ticks = 0
 
-        self.loop = True
-    def events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
+    def events(self, events, pressed_keys):
+        for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_r:
                     self.restart()
@@ -51,7 +46,7 @@ class Level1(Level):
             if not self.lock_player:
                 self.player.control(event)
 
-    def draw(self):
+    def draw(self, display):
         display.fill((189, 149, 106))
         self.mountains2.draw(display, -int(camera.x * 0.3), -int(camera.y * 0.3))
         self.mountains1.draw(display, -int(camera.x * 0.6), -int(camera.y * 0.7))
@@ -65,6 +60,10 @@ class Level1(Level):
             self.cactus.lifebar.draw_liferects(display)
             self.cactus.lifebar.draw(display)
 
+        #bossname
+        if self.is_drawing_boss_name:
+            draw_text(display, 'CACSHOTO', 160 - camera.x, 140 - camera.y, 15, 'assets/fonts/Comodore64.TTF')
+
         #player
         self.player.draw(display, -camera.x, -camera.y)
         for heart in self.player.hearts:
@@ -77,9 +76,7 @@ class Level1(Level):
         #particles
         particles_mng.draw_particles(display, -camera.x, -camera.y)
 
-    def update(self):
-        dt = clock.dt
-
+    def update(self, dt):
         #CAMERA
         camera.limit([3, 97], [25, 35])
         camera.update(dt)
@@ -89,8 +86,7 @@ class Level1(Level):
         self.player.collision_move(self.tiles, dt)
         self.player.anim(dt)     
         if self.player.dead:
-            self.restart()
-            return 'restartmenu'
+            self.change_scene('restartmenu')
 
         #CACTUS
         if not self.cactus.is_dead:
@@ -99,8 +95,7 @@ class Level1(Level):
         else:
             self.win_ticks += 1 * dt
             if int(self.win_ticks) > 200:
-                self.restart()
-                return 'winmenu'
+                self.change_scene('winmenu')
         #PARTICLES
         particles_mng.update(dt)
         
@@ -127,9 +122,11 @@ class Level1(Level):
             if camera.zoom <= 2:
                 camera.zoom += 0.01 * dt
 
-            draw_text(display, 'CACSHOTO', 160 - camera.x, 140 - camera.y, 15, 'assets/fonts/Comodore64.TTF')
+            self.is_drawing_boss_name = True
 
         elif int(self.cutscene_ticks) >= 160 and int(self.cutscene_ticks) <= 170:
+            self.is_drawing_boss_name = False
+
             camera.delay_x = 30
             camera.delay_y = 50 
             camera.target = self.player
@@ -143,6 +140,3 @@ class Level1(Level):
             camera.zoom = 1
             camera.delay_x = 20
             camera.delay_y = 50
-
-    
-        
